@@ -1,0 +1,65 @@
+<?php 
+#=======================================================================
+#						- Template starts -
+
+// 		LOAD FILES REQUIRED TO CONNECT WITH Wanni CMS
+
+/** This gives you access too core functions and variables.
+ *  It can be optional if you want your addon to act independently. **/
+
+$r = dirname(dirname(__FILE__)); #do not edit
+$r = $r .'/'; #do not edit
+require_once($r .'includes/functions.php'); #do not edit
+require_once('details.php');
+$addon_home = $my_addon_name;
+$_SESSION['addon_home'] = '<a href="' .BASE_PATH . 'menus'.
+'" class ="home-link">Menu</a>';
+
+start_addons_page();  
+#						- Template ends -
+#=======================================================================
+
+?>
+<!--  DO NOT EDIT ABOVE THIS LINE UNLESS YOU KNOW WHAT YOU ARE DOING -->
+
+<!-- HEADER REGION START -->
+
+<section class="container">
+ <h1>Menus</h1>
+ <div class='margin-10'> 
+<?php
+# CUSTOM CODE HERE 
+if (!isset($_SESSION['username'])){
+
+} else { 
+if($_SESSION['role']==='admin' || $_SESSION['role']==='manager'){	
+	
+	echo '<div class="top-left-links">
+		<ul>
+			<li id="add_page_form_link" class="float-right-lists">
+				<a href="'.BASE_PATH .'menus/add">Add Menu </a></li>
+			<li id="show_blocks_form_link" class="float-right-lists">
+				<a href="'.BASE_PATH .'menus/"> List menus</a> </li>
+		</ul>
+	</div>';
+	
+	echo "<br>";
+	#MENUS
+	delete_menu();	 
+	list_menus();
+	
+	#MENU ITEMS
+	list_menu_items();
+	add_menu_item(); 
+	edit_menu_item();
+	delete_menu_item();
+	
+} else { deny_access();}
+ }
+?>
+</div>
+
+</section>
+
+</body>
+</html>

@@ -1,0 +1,2 @@
+[30-Jun-2015 23:14:42 UTC] PHP Warning:  require_once(details.php) [<a href='function.require-once'>function.require-once</a>]: failed to open stream: No such file or directory in /home/geniusai/public_html/documentation/index.php on line 13
+[30-Jun-2015 23:14:42 UTC] PHP Fatal error:  require_once() [<a href='function.require'>function.require</a>]: Failed opening required 'details.php' (include_path='.:/usr/lib/php:/usr/local/lib/php') in /home/geniusai/public_html/documentation/index.php on line 13

@@ -1,0 +1,37 @@
+.config-center{
+text-align: center;
+padding: 15px;
+background-color: whitesmoke;
+border-radius: 5px;
+border-width: 2px;
+}
+
+input {
+width: auto;
+height: 30px;
+margin-bottom: 10px;
+background-color: bisque;
+border-radius: 5px;
+}
+
+.top_bar{
+	display: block;
+padding-top: 5px;
+padding-left: 5px;
+padding-right: 5px;
+padding-bottom: 5px;
+margin-bottom: 5px;
+float: left;
+width: 99%;
+background-color: black;
+color: white;
+cursor: pointer;
+
+}
+
+.top_bar a{
+text-transform: capitalize;
+text-decoration: none;
+color: white;
+font-weight: bold;
+}

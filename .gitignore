@@ -1,0 +1,16 @@
+*.htaccess
+connect.php
+*.jpg
+*.png
+*.gif
+*.gz
+*.pdf
+*.JPG
+*.JPEG
+*.jpeg
+*.php.org
+*.goutputstream
+disclaimer.php
+uploads/files/user/**
+php.ini
+*.goutputstream**
