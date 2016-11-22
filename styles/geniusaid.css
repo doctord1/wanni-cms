@@ -136,7 +136,7 @@ html {
   min-width: 180px;
 
   }
-body {display: block;height: auto;min-height: 400px;padding: 0px;margin: 0px;background-color: white;font-size: 17px; /* currently ems cause chrome bug misinterpreting rems on body element */line-height: 30px;font-weight: 400;font-family: "Nimbus Roman No9 L", "Liberation Mono", "Nimbus Roman No9 L", "Nimbus Sans L", "DejaVu Sans","DejaVu Sans";color: black;width:100%;overflow: auto;}
+body {display: block;height: auto;min-height: 400px;padding: 0px;margin: 0px;background-color: white;font-size: 17px; /* currently ems cause chrome bug misinterpreting rems on body element */line-height: 30px;font-weight: 400;font-family: "Sans-serif", "Nimbus Roman No9 L", "Liberation Mono", "Nimbus Roman No9 L", "Nimbus Sans L", "DejaVu Sans","DejaVu Sans";color: black;width:100%;overflow: auto;}
  
 smaller{
 font-size: 13px;
