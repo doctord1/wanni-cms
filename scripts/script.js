@@ -176,6 +176,19 @@ $(document).ready(function () {
 		
 		});
 		
+	//togle interswitch pay for fundraisers
+	$('.interswitch-pay').hide();
+	$('.site-funds-pay').hide();
+	$('.toggle-interswitch').click(function(){
+			$('.interswitch-pay').show('slow');
+			$('.site-funds-pay').hide('slow');
+
+	});
+	$('.toggle-funds').click(function(){
+			$('.site-funds-pay').show('slow');
+			$('.interswitch-pay').hide('slow');
+	});
+		
 	//push tamer
 	$('.pushcrew-modal-branding').hide();
 	

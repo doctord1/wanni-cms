@@ -75,7 +75,7 @@ function request_payout(){
 		$request_time = date('c');
 		
 		
-		$query = mysqli_query($GLOBALS["___mysqli_ston"], "INSERT INTO `payment`(`id`,`owner`,`amount`,`status`,`request_time`,`payout_time`,`balance`) 
+		$query = mysqli_query($GLOBALS["___mysqli_ston"], "INSERT INTO `payouts`(`id`,`owner`,`amount`,`status`,`request_time`,`payout_time`,`balance`) 
 		VALUES('0','{$user}','{$amount}','payment requested','{$request_time}','','{$_SESSION['site_funds_amount']}')") 
 		or die('Failed to complete payment request! ' . ((is_object($GLOBALS["___mysqli_ston"])) ? mysqli_error($GLOBALS["___mysqli_ston"]) : (($___mysqli_res = mysqli_connect_error()) ? $___mysqli_res : false)));
 		
@@ -112,7 +112,7 @@ function view_payout_report(){
 		$amount = trim(mysql_prep($_GET['amount']));
 		$reciever = trim(mysql_prep($_GET['owner']));
 		transfer_funds('subtract',"{$amount}","system", "{$reciever}");
-		$query = mysqli_query($GLOBALS["___mysqli_ston"], "UPDATE `payment` SET `status`='paid', `payout_time`='{$time}' WHERE `id`='{$id}'") 
+		$query = mysqli_query($GLOBALS["___mysqli_ston"], "UPDATE `payouts` SET `status`='paid', `payout_time`='{$time}' WHERE `id`='{$id}'") 
 		or die("Failed to update payment status " . ((is_object($GLOBALS["___mysqli_ston"])) ? mysqli_error($GLOBALS["___mysqli_ston"]) : (($___mysqli_res = mysqli_connect_error()) ? $___mysqli_res : false)));
 		
 		if($query){

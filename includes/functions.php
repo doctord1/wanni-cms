@@ -1240,7 +1240,9 @@ function do_footer(){
 				});
 		    });
 		    
-		</script>".
+		</script>
+		
+		".'<!-- Go to www.addthis.com/dashboard to customize your tools --> <script type="text/javascript" src="//s7.addthis.com/js/300/addthis_widget.js#pubid=ra-583a9f4c273aaaed"></script>  '.
     "<div class='text-center'>Powered by - Wanni CMS</div>" .
 	   "</div>";
 	
@@ -1421,7 +1423,7 @@ function parse_text_for_output($string){ // Should handle the formatting and out
 		// It will not match words with "@" anywhere but the start of the word.
 		if(preg_match_all($pattern,$string,$matches)){
 			foreach($matches[0] as $match){
-			$changed_match = str_ireplace('@','',str_ireplace($match, "<a href='".BASE_PATH."user/?user=".$match."'>{$match}</a>", $match));
+			$changed_match = str_ireplace($match, "<a href='".BASE_PATH."user/?user=".str_ireplace('@','',$match)."'>{$match}</a>", $match);
 			$new_string = preg_replace("/{$match}/", $changed_match, $string);
 			$new_string = str_ireplace('&amp;','&',$new_string);
 			$string = $new_string;
@@ -1492,7 +1494,7 @@ if($width !== ''){
 			$width = 420;
 			$height = 315;
 			}    
-$vid ='<iframe width="'.$width.'" height="'.$height.'" src="http://player.vimeo.com/video/'.$id.'?title=0&amp;byline=0&amp;portrait=0&amp;badge=0&amp;color=ffffff" frameborder="0" webkitAllowFullScreen mozallowfullscreen allowFullScreen></iframe><br></nr>';
+$vid ='<div class=""><iframe width="'.$width.'" height="'.$height.'" src="http://player.vimeo.com/video/'.$id.'?title=0&amp;byline=0&amp;portrait=0&amp;badge=0&amp;color=ffffff" frameborder="0" webkitAllowFullScreen mozallowfullscreen allowFullScreen></iframe><br>';
  
  return $vid;  
    }
@@ -1511,7 +1513,7 @@ function convertYoutube($string='', $width='') {
 			}
 	$output = preg_replace(
 		"/\s*[a-zA-Z\/\/:\.]*youtu(be.com\/watch\?v=|.be\/)([a-zA-Z0-9\-_]+)([a-zA-Z0-9\/\*\-\_\?\&\;\%\=\.]*)/i",
-		"<iframe width=\"{$width}\" height=\"{$height}\" src=\"http://www.youtube.com/embed/$2\" target='blank' allowfullscreen></iframe>",
+		"<div class='responsive-video'><iframe width=\"{$width}\" height=\"{$height}\" src=\"http://www.youtube.com/embed/$2\" target='blank' allowfullscreen></iframe></div>",
 		$string
 	);
 	return $output;
@@ -2027,7 +2029,7 @@ function deny_access(){
 	
 function log_in_to_continue(){
 	if(!is_logged_in()){
-	 echo "<div class='main-content-region'><p align='center'>You must <a href='".BASE_PATH."user?redirect_to=".$_SESSION['current_url']."'>Log in </a> 
+	 echo "<div class='main-content-region'><p align='center'><a href='".BASE_PATH."user?redirect_to=".$_SESSION['current_url']."'>Log in </a> 
 	 or <a href='".BASE_PATH."user?action=register&redirect_to=".$_SESSION['current_url']."'>Signup </a> to continue .</p></div>";
 		}
 	}

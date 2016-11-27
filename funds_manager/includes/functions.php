@@ -140,6 +140,47 @@ function get_voguepay_transaction_details($transaction_id=''){
 	return $voguepay;
 }
 
+function record_payment_transaction(){
+	$voguepay = get_voguepay_transaction_details($transaction_id);
+	
+	if(string_contains('addons/fundraiser_name=',$voguepay['referer'])){
+		$action = 'Support';
+		
+		}
+	if($voguepay['merchant_id'] == '13302-13767' && isset($voguepay['memo'])){
+		$target = mysql_prep($voguepay['merchant_ref']);
+		$channel = 'voguepay';
+		$email = mysql_prep($voguepay['email']);
+		$status = mysql_prep($voguepay['status']);
+		$transaction_id = mysql_prep($voguepay['transaction_id']);
+		$amount = mysql_prep($voguepay['total']);
+		$time = getdate();
+		$today = $time['weekday'] .' '. $time['mday'].' '. $time['month'].' '. $time['year'].' '. $time['hours'].':'. $time['minutes'].' :: '. $time['seconds'];
+
+		//save to db
+		$query = mysqli_query("INSERT INTO `payment_transactions`(`id`, `transaction_id`, `actor`, `action`, `target`, `target_type`, `channel`, `amount`, `status`) 
+		VALUES ('0','{$transaction_id}','{$target}','fundraiser','voguepay','{$amount}','{$status}')") or die('Error recording payment transaction '.mysqli_error());
+		if($query){
+			status_message('success','payment recorded');
+			}
+
+		$query = mysqli_query("SELECT amount_raised FROM fundraiser WHERE id='{$target}'") or die('Error fetching target fundraiser '. mysql_error());
+		$result = mysqli_fetch_array($query);
+		
+		$update_amount = $result['amount'] + $amount;
+		$update_fundraiser_query = mysqli_query("UPDATE `fundraiser` SET `amount_raised`='{$update_amount}' 
+		WHERE `id`='{$target}'") or die("Fundraiser amount-raised update error! ". ((is_object($GLOBALS["___mysqli_ston"])) ? mysqli_error($GLOBALS["___mysqli_ston"]) : (($___mysqli_res = mysqli_connect_error()) ? $___mysqli_res : false)));
+
+		//~ $insert_fundraiser_donor_query = mysqli_query($GLOBALS["___mysqli_ston"], "INSERT INTO `fundraiser_donors`
+		//~ (`id`, `donor`, `amount`, `fundraiser_name`, `recipient`, `date`) 
+		//~ VALUES ('0', '{$giver}', '{$amount}', '{$fundraiser_name}', '{$reciever}', '{$today}')") 
+		//~ or die("Fundraiser_donor insert error!". ((is_object($GLOBALS["___mysqli_ston"])) ? mysqli_error($GLOBALS["___mysqli_ston"]) : (($___mysqli_res = mysqli_connect_error()) ? $___mysqli_res : false)));
+
+	}
+	
+}
+	
+
 function transfer_funds($action='',$amount='',$giver='',$reciever='',$reason=''){
 	
 	if(isset($_SESSION['username'])){
@@ -207,15 +248,15 @@ $new_giver_balance = $giver_balance - $amount;
 	if(!empty($_POST['add_funds']) || !empty($amount) || isset($_POST['transaction_id']) || $_POST['action'] == 'load_top_up'){
 	
 		
-# do add funds 
-		if($_POST['action'] == 'donate' ){
-		#echo "Doing add funds manager!" //testing purposes
-		# reciever
-		$fm_query = mysqli_query($GLOBALS["___mysqli_ston"], "INSERT INTO `funds_manager`(`id`, `giver`, `reciever`, `amount`, `time`, `reason`, `balance`) VALUES 
-		('0', '{$giver}', '{$reciever}', '{$amount}', '{$today}', '{$reason}', '{$new_reciever_balance}')") 
-		or die("Add funds failed" . ((is_object($GLOBALS["___mysqli_ston"])) ? mysqli_error($GLOBALS["___mysqli_ston"]) : (($___mysqli_res = mysqli_connect_error()) ? $___mysqli_res : false)));
-		}
-		
+//~ # do add funds 
+		//~ if($_POST['action'] == 'donate' ){
+		//~ #echo "Doing add funds manager!" //testing purposes
+		//~ # reciever
+		//~ $fm_query = mysqli_query($GLOBALS["___mysqli_ston"], "INSERT INTO `funds_manager`(`id`, `giver`, `reciever`, `amount`, `time`, `reason`, `balance`) VALUES 
+		//~ ('0', '{$giver}', '{$reciever}', '{$amount}', '{$today}', '{$reason}', '{$new_reciever_balance}')") 
+		//~ or die("Add funds failed" . ((is_object($GLOBALS["___mysqli_ston"])) ? mysqli_error($GLOBALS["___mysqli_ston"]) : (($___mysqli_res = mysqli_connect_error()) ? $___mysqli_res : false)));
+		//~ }
+		//~ 
 # do vote in contest 
 		if($_POST['action'] == 'vote-contest'){
 		$user_funds = get_user_funds();	
@@ -332,7 +373,7 @@ echo "
 <form method='POST' action='https://voguepay.com/pay/'>
 
 <input type='hidden' name='v_merchant_id' value='".$merchant_id."' />
-<input type='hidden' name='merchant_ref' value='".$username."' />
+<input type='text' name='merchant_ref' value='".$username."' placeholder='Username to be funded' />
 <input type='hidden' name='notify_url' value='".BASE_PATH."funds_manager/process.php' />
 <input type='hidden' name='success_url' value='".BASE_PATH."funds_manager/success.php' />
 <input type='hidden' name='memo' value='Fund Your GeniusAid Account' />

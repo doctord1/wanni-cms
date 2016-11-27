@@ -32,6 +32,7 @@ $active = 0;}
 else{
 $active = 1;}
 
+$transaction_id = $_POST['transaction_id'];
 $action = htmlentities($_POST['action']);
 $updated = htmlentities($_POST['updated']);
 $submitted = trim(mysql_prep($_POST['submitted']));

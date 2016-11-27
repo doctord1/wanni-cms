@@ -40,6 +40,7 @@ require_once($r .'includes/functions.php'); #do not edit
 <?php 
 $destination = BASE_PATH."?section_name=fundraiser";
 
+delete_fundraiser_perk();
 $s = $_SERVER['QUERY_STRING'];
 if(empty($s)){
 	//redirect_to($destination);

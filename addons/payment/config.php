@@ -105,12 +105,18 @@ $query = mysqli_query($GLOBALS["___mysqli_ston"],
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ");	
 
 $query = mysqli_query($GLOBALS["___mysqli_ston"], 
-"CREATE TABLE IF NOT EXISTS `voguepay_transactions` (
+"CREATE TABLE IF NOT EXISTS `payment_transactions` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `transaction_id` varchar(20) NOT NULL,
-  `user` varchar(150) NOT NULL,
+  `actor` varchar(150) NOT NULL,
+  `action` varchar(150) NOT NULL,
+  `target` varchar(50) NOT NULL,
+  `target_type` varchar(50) NOT NULL,
+  `channel` varchar(150) NOT NULL,
+  `amount` int(6) NOT NULL,
+  `status` varchar(20) NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=1 ");
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=2");
 
 
 if($query) { echo "<br>Successfully Activated ". $addon_name ;

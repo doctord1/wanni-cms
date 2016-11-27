@@ -17,8 +17,13 @@ function view_item($table=''){
 
 function delete_item($table='',$destination=''){
 	if($_GET['action'] == "delete_{$table}" && !isset($_GET['do_delete'])){
-		
+	
+	if(isset($_GET['tid'])){	
 	$id = trim(mysql_prep($_GET['tid']));
+	}else if(isset($_GET['fid'])){
+		$id = trim(mysql_prep($_GET['tid']));
+		}
+	
 	
 	$query= mysqli_query($GLOBALS["___mysqli_ston"], "DELETE FROM {$table} WHERE id={$id}") or die("Failed to delete item" . ((is_object($GLOBALS["___mysqli_ston"])) ? mysqli_error($GLOBALS["___mysqli_ston"]) : (($___mysqli_res = mysqli_connect_error()) ? $___mysqli_res : false)));
 	unlink($_SERVER['DOCUMENT_ROOT'].'/addons/ads/ad_images/'.$result['name']);

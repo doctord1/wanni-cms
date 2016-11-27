@@ -124,13 +124,14 @@ $create_fundraiser = mysqli_query($GLOBALS["___mysqli_ston"], "
 
 $create_perks = mysqli_query($GLOBALS["___mysqli_ston"], "
 CREATE TABLE IF NOT EXISTS `fundraiser_perks` (
-  `id` int(11) DEFAULT NULL,
+  `id` int(11) NOT NULL AUTO_INCREMENT,
   `fundraiser_id` int(11) NOT NULL,
   `donation_amount` int(11) NOT NULL,
   `reward` text NOT NULL,
   `amount_available` int(11) NOT NULL,
-  `amount_claimed` int(11) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=latin1") or die("Create fundraiser perks failed" . ((is_object($GLOBALS["___mysqli_ston"])) ? mysqli_error($GLOBALS["___mysqli_ston"]) : (($___mysqli_res = mysqli_connect_error()) ? $___mysqli_res : false)));
+  `amount_claimed` int(11) NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1 AUTO_INCREMENT=1") or die("Create fundraiser perks failed" . ((is_object($GLOBALS["___mysqli_ston"])) ? mysqli_error($GLOBALS["___mysqli_ston"]) : (($___mysqli_res = mysqli_connect_error()) ? $___mysqli_res : false)));
 
 $create_fundraiser_donors = mysqli_query($GLOBALS["___mysqli_ston"], "
 

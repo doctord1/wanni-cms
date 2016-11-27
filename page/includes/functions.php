@@ -29,7 +29,22 @@ require_once($r .'includes/functions.php'); #do not edit
 
 
 # OUTPUT HEADER (OPTIONAL)
-
+echo '<style>
+.stButton .stFb, .stButton .stTwbutton, .stButton .stMainServices {
+    background-image: url(/images/facebook_counter.png);
+    background-repeat: no-repeat;
+    display: inline-block;
+    white-space: nowrap;
+    font-family: Verdana,Helvetica,sans-serif;
+    font-size: 11px;
+    height: 24px;
+    padding-top: 3px;
+    padding-bottom: 3px;
+    line-height: 16px;
+    width: auto;
+    position: relative;
+}
+</style>';
 
 # ADD PAGES
 function add_page() {
@@ -404,7 +419,7 @@ function get_page_types(){ //deprecated
 	}
 
 function add_child_page(){
-	if($_SESSION['page_type'] =='page' && is_author()){
+	if($_SESSION['page_type'] =='page' || $_SESSION['page_type'] =='discussion' && is_author()){
 	echo "<div class='padding-10 clear whitesmoke pull-right'><a href='".BASE_PATH.'page/add/?type=page&parent_id='.$_SESSION['page_id'].'&section_name='
 	.$_SESSION['section_name'].'&category='.$_SESSION['category']."'>Add child page</a></div>";
 	}
@@ -439,7 +454,7 @@ function get_parent_page(){
 	$query = mysqli_query($GLOBALS["___mysqli_ston"], "SELECT `id`,`page_name` FROM page WHERE id='{$parent_id}'")or die(((is_object($GLOBALS["___mysqli_ston"])) ? mysqli_error($GLOBALS["___mysqli_ston"]) : (($___mysqli_res = mysqli_connect_error()) ? $___mysqli_res : false)));
 	while($result = mysqli_fetch_array($query)){
 	
-	echo '<div class="pull-right whitesmoke padding-10 inline-block margin-10"><strong>Parent :</strong><a href="'.BASE_PATH.'?page_name='.$result['page_name'].'&tid='.$result['id'].'">'.str_ireplace('-',' ',$result['page_name']).'</a></div>';
+	echo '<div class="pull-right whitesmoke padding-10 inline-block margin-10"><strong>Parent :</strong><a href="'.BASE_PATH.'?page_name='.$result['page_name'].'&tid='.$result['id'].'">'.urldecode(str_ireplace('-',' ',$result['page_name'])).'</a></div>';
 	}
 }
 
@@ -490,7 +505,7 @@ $created = date('c');
 		 if($query){ 
 			 $q = mysqli_query($GLOBALS["___mysqli_ston"], "SELECT `id` FROM comments WHERE `content`='{$content}' AND `created`='{$created}' LIMIT 0,1");
 			 $result=mysqli_fetch_array($q);
-			 upload_image('','','',$comment_id=$result['id']);
+			 
 			 echo '<div class="success"> Saved Successfully!</div>'; }
 		 
 		 
@@ -517,9 +532,9 @@ $created = date('c');
 			<input type="hidden" name="parent_id" value="'.$parent_id.'">
 			<input type="hidden" name="MAX_FILE_SIZE" value="5000000" />
 			<!-- Name of input element determines name in $_FILES array -->';
-			if($upload_allowed =='true'){
-			echo '<input type="file" size="500" name="image_field" value="" placeholder="choose picture">';
-			}
+			//~ if($upload_allowed =='true'){
+			//~ echo '<input type="file" size="500" name="image_field" value="" placeholder="choose picture">';
+			//~ }
 			echo' <textarea name="content" size="5" placeholder="'.$placeholder.'"></textarea>
 			<input type="submit" name="add_comment" value="'.$button_text.'" class="button-primary">
 			</form>	';
@@ -561,23 +576,22 @@ $created = date('c');
 	 or die("comment list error" . ((is_object($GLOBALS["___mysqli_ston"])) ? mysqli_error($GLOBALS["___mysqli_ston"]) : (($___mysqli_res = mysqli_connect_error()) ? $___mysqli_res : false)));
 	$count = mysqli_num_rows($query);
 	while($result = mysqli_fetch_array($query)){
-	$photos = get_linked_image('','half','',$comment_id=$result['id'],$has_zoom='true');
-	
-	$pic = show_user_pic($user=$result['author'] ,$pic_class='img-rounded');	
+	//$photos = get_linked_image('','half','',$comment_id=$result['id'],$has_zoom='true');
+		
 			
 	#Show Comments	
-		echo "<tr><td class='table-message-sender darkturquoise'>";
+		echo "<tr><td class='table-message-plain'>";
 
-		echo $pic['thumbnail'] ."</a></td><td class='table-message-plain'>";
+		echo '<a href="'.BASE_PATH.'user/?user='.$result['author'] .'">'.$result['author'] .'</a>';
 		echo "<div class='last-updated pull-right'> <time class='timeago' datetime='".$result['created'] ."'>".$result['created'] ."</time></div><br>";
 		
-		if(!empty($photos)){
-			
-			foreach ($photos as $photo){
-				echo $photo ;
-				}
-			
-			}
+		//~ if(!empty($photos)){
+			//~ 
+			//~ foreach ($photos as $photo){
+				//~ echo $photo ;
+				//~ }
+			//~ 
+			//~ }
 		
 		echo parse_text_for_output($result['content']);
 		if((($result['author'] == $_SESSION['username']) || is_author() || is_admin())&&is_logged_in()){
@@ -830,7 +844,10 @@ function get_page_content($page='home') {
 						echo '</ul>
 						</div>';
 					  }
-
+					$share_buttons ='<div class="block">
+										<!-- Go to www.addthis.com/dashboard to customize your tools --> <div class="addthis_inline_share_toolbox"></div>
+										</div>';
+						
 
 					  # GET PAGE IMAGES
 					  $is_mobile = check_user_agent('mobile');
@@ -855,7 +872,8 @@ function get_page_content($page='home') {
 
 					  echo "<div class='sweet_title'>" . str_ireplace('-',' ',ucfirst(urldecode($result['page_name']))) .$last_update."</br></div>";
 					  if(($_GET['page_name'] !== 'login') && (!$edit_page)  && ($_GET['page_name'] !== 'sections')){
-
+						
+						
 					
 						 echo "";
 						 //show picture upload form for authors
@@ -876,7 +894,8 @@ function get_page_content($page='home') {
 						 echo"</td>";
 						 
 						#Show page images 
-						echo "<td class='table-message-plain'>";   
+						echo "<td class='table-message-plain'>"; 
+						//echo $share_buttons;  
 						if(!empty($pics)){  
 							
 							$switch = strpos($result['content'],'show_images_in_lists');
@@ -892,6 +911,7 @@ function get_page_content($page='home') {
 							
 						} 
 						
+						
 						#SHOW CONTENT ONLY WHEN USER IS NOT PERFORMING AN ACTION e.g VOTING
 						if(! isset($_GET['action'])){ 	
 							$content1 = $result['content'];
@@ -901,6 +921,7 @@ function get_page_content($page='home') {
 						$content = parse_text_for_output($content);
 						}
 					echo $content;
+					echo $share_buttons;
 					
 					
 						
@@ -1068,7 +1089,6 @@ if(is_logged_in()){
 	Quick links: 
 	<span class="padding-5"><a href="'.ADDONS_PATH.'hashtags/?hashtag=complaints">#complaints</a> | </span>
 	<span class="padding-5"><a href="'.ADDONS_PATH.'hashtags/?hashtag=suggestion">#suggestion</a> | </span>
-	<span class="padding-5"><a href="'.ADDONS_PATH.'hashtags">discussions</a> | </span>
 	<span class="padding-5"><a href="'.ADDONS_PATH.'fundraiser">fundraisers</a> | </span>
 	<span class="padding-5"><a href="'.ADDONS_PATH.'contest">contests</a> | </span>
 	<span class="padding-5"><a href="'.ADDONS_PATH.'jobs">jobs(paid tasks)</a> | </span>
@@ -1122,7 +1142,7 @@ function get_discussion_content(){
 		$query = mysqli_query($GLOBALS["___mysqli_ston"], "SELECT * FROM `page` ORDER BY `id` DESC {$limit}")
 		or die ("Failed to get discussions ". ((is_object($GLOBALS["___mysqli_ston"])) ? mysqli_error($GLOBALS["___mysqli_ston"]) : (($___mysqli_res = mysqli_connect_error()) ? $___mysqli_res : false)));
 		}
-		echo '<section class=""><table class=""><tbody>';
+		echo '<section class=""><table class="table"><tbody>';
 		
 		 # GET PAGE IMAGES
       $is_mobile = check_user_agent('mobile');

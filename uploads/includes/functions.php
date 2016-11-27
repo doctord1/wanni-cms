@@ -717,7 +717,7 @@ function show_files_listing($start='',$stop=''){
 			} else { status_message("error", "Unlink failed!");}
 		}
 	
-	$query = mysqli_query($GLOBALS["___mysqli_ston"], "SELECT * FROM `files` LIMIT {$start},{$stop}") 
+	$query = mysqli_query($GLOBALS["___mysqli_ston"], "SELECT * FROM `files` order by id DESC LIMIT {$start},{$stop}") 
 	or die("Error Fetching files " . ((is_object($GLOBALS["___mysqli_ston"])) ? mysqli_error($GLOBALS["___mysqli_ston"]) : (($___mysqli_res = mysqli_connect_error()) ? $___mysqli_res : false)));
 	$start = $stop;
 	
@@ -726,18 +726,21 @@ function show_files_listing($start='',$stop=''){
 	//refresh $files
 	$files = scandir($dir);
 	echo "<h1>Files Listing</h1>
-	<table class='table'><thead>
+	<table class='table'><thead><th>id</th>
 	<th>Preview</th><th>Filename</th>
 	</thead><tbody>";
 	while($result = mysqli_fetch_array($query)){
 		
 		if(in_array($result['name'],$files,TRUE)){
-			echo "<tr><td><a href='".$result['large_path']."'><img src='".$result['small_path']."'></a></td><td>".$result['name']."<br>
+			echo "<tr><td>{$result['id']}</td><td><a href='".$result['large_path']."'><img src='".$result['small_path']."'></a></td><td>".$result['name']."<br>
 			<strong>Appears in: </strong> <em>".$result['parent']."</em></td></tr>";
 			if(($key = array_search($result['name'], $files)) !== false) {
 			unset($files[$key]);
 			}
-		}
+		} else{
+			echo "<tr><td>{$result['id']}</td><td><a href='".$result['large_path']."'><img src='".$result['small_path']."'></a></td><td>".$result['name']."<br>
+			<strong>Appears in: </strong> <em>".$result['parent']."</em></td></tr>";
+			}
 			
 	}
 	echo "</tbody></table>";
@@ -773,16 +776,16 @@ function show_files_listing($start='',$stop=''){
 	 && !url_contains('page_name=home') 
 	 && !url_contains('page_name=sections') 
 	 && !url_contains('section_name=')){
-		 if(!$is_mobile){
+		 
 			 echo "<div id='pic-toggle' style='background-color: whitesmoke;'>
-		 <span class='text-center gainsboro' id='add-picture'>Add media to this post</span><span id='pic-close' style='background-color: gainsboro; padding: 5px; cursor: pointer'> Close x</span><br>
+		 <span class='text-center gainsboro inline-block' id='add-picture'>Add media to this post</span><span id='pic-close' style='background-color: gainsboro; padding: 5px; cursor: pointer'> Close x</span><br>
 		 <div class='content'>";
-		 }
+		 
 		 upload_image();
-		if(!$is_mobile){
+		
 			 echo "</div></div>";
 		// show_page_images();
-		 }
+		 
 	}
 }
 

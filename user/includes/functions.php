@@ -222,21 +222,23 @@ function is_user_page(){
 
 function online_users($type=''){
 	if(isset($_SESSION['username'])){
+	$diff = 54000;
 	$now = time();
-	$time_limit = ((time()/60)+15) - ($now/60);
-	$time_limit = $time_limit * 60;
+	$time_limit = $now - $diff; ;
 
-	$query = mysqli_query($GLOBALS["___mysqli_ston"], "SELECT `user_name`,`last_login` FROM `user` WHERE `last_login`<='{$time_limit}' LIMIT 0, 30") 
+	$query = mysqli_query($GLOBALS["___mysqli_ston"],"SELECT `user_name`,`last_login` FROM `user` WHERE last_login>='{$time_limit}' Limit 20") 
 	or die("Failed to get last seen users" . ((is_object($GLOBALS["___mysqli_ston"])) ? mysqli_error($GLOBALS["___mysqli_ston"]) : (($___mysqli_res = mysqli_connect_error()) ? $___mysqli_res : false)));
 	
 	echo "<h2>Recently logged in persons</h2>";
 	$last_seen = array();
+	
 	while ($result = mysqli_fetch_array($query)){
-		$name = $result['user_name'];
 		
+		$name = $result['user_name'];
 		$person = show_user_pic($name) ;
 		$login_timeago = (( time() - $result['last_login']) / 60 );
-		if($login_timeago - $time_limit < 360){ 
+		
+		if($login_timeago < 900){ 
 			$last_seen[]= $name;
 			if($type === 'pics'){
 			$pics = "<span class=''>" . $person['thumbnail']." &nbsp</span>";

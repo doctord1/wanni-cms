@@ -80,7 +80,7 @@ $form = '<div class="edit-form page_content">
 
 }
 function is_fundraiser_owner(){
-	if($_SESSION['username'] == $_SESSION['author'] && url_contains('fundraiser_name=')){
+	if($_SESSION['username'] == $_SESSION['author']){
 		return true;
 		} else {
 			return false;
@@ -98,7 +98,8 @@ function add_perk(){ // Benefit to donors
 		VALUES('0','{$fundraiser_id}','{$donation_amount}','{$reward}','{$amount_available}','0')") 
 		or die('Failed to save perk '.((is_object($GLOBALS["___mysqli_ston"])) ? mysqli_error($GLOBALS["___mysqli_ston"]) : (($___mysqli_res = mysqli_connect_error()) ? $___mysqli_res : false)));
 		if($query){
-			status_message('success','Perk saved!');
+			session_message('success','Perk saved!');
+			redirect_to($_SESSION['current_url']);
 			}
 		}
 	if(is_fundraiser_owner()){	
@@ -123,17 +124,17 @@ function claim_fundraiser_perk(){
 
 function show_fundraiser_perks(){
 	$fundraiser_id = mysql_prep($_SESSION['fundraiser_id']);
-	$balance = get_user_funds();
 	$reciever = $_SESSION['author'];
-	if($reciever != $_SESSION['username']){
+	if(is_fundraiser_owner()){
 	$query= mysqli_query($GLOBALS["___mysqli_ston"], "SELECT * FROM fundraiser_perks where fundraiser_id='{$fundraiser_id}' order by id desc")
 	 or die('Could not select perks '.((is_object($GLOBALS["___mysqli_ston"])) ? mysqli_error($GLOBALS["___mysqli_ston"]) : (($___mysqli_res = mysqli_connect_error()) ? $___mysqli_res : false))); 
 	 
 	 while($result = mysqli_fetch_array($query)){
 		echo '<div class="page-content">';
 		echo '<div class="title clear">'.'$'.$result['donation_amount'].'<hr></div>
-		 <div class="padding-10">'.
-		 $result['reward'].
+		 <div class="">'.
+		 $result['reward'];
+		 if(is_logged_in()){
 		 '<form method="post" action="process.php">
 		 <input type="hidden" name="amount" value="'.$result['donation_amount'].'">'.
 		 "<input type='hidden' name='action' value='donate'>
@@ -144,14 +145,55 @@ function show_fundraiser_perks(){
 		<input type='hidden' name='giver' value='".$_SESSION['username']."'>
 		<input type='hidden' name='add_funds' value='yes'>
 		<input type='hidden' name='reason' value='support ".$_GET['fundraiser_name']." fundraiser'>".
-		 "<input type='submit' name='submit' value='Claim this' class='btn btn-primary'>".
-		 '</form></div>'; 
+		 "<input type='submit' name='submit' value='Claim this' class='btn btn-primary'>";
+		 
+		 echo '</form>'; 
+		 }
+		// echo '</div>';
+		 if(is_logged_in()){
+		 '<form method="post" action="process.php">
+		 <input type="hidden" name="amount" value="'.$result['donation_amount'].'">'.
+		 "<input type='hidden' name='action' value='donate'>
+		<input type='hidden' name='current_amount' value='".$current_amount."'>
+		<input type='hidden' name='user_balance' value='".$balance."'>
+		<input type='hidden' name='reciever' value='".$reciever."'>
+		<input type='hidden' name='fundraiser_name' value='".$_GET['fundraiser_name']."'>
+		<input type='hidden' name='giver' value='".$_SESSION['username']."'>
+		<input type='hidden' name='add_funds' value='yes'>
+		<input type='hidden' name='reason' value='support ".$_GET['fundraiser_name']." fundraiser'>".
+		 "<input type='submit' name='submit' value='Claim this' class='btn btn-primary'>";
+		 
+		 echo '</form>'; 
+		 //
+		 if(is_fundraiser_owner()){
+		
+		 echo "<span class='tiny-text'> <a href='".ADDONS_PATH."fundraiser/?delete_perk=".$result['id']."'> delete </a></span>";
+		 }
+		 }
+		 echo '</div>';
 		 echo '</div>';
 	}
 	}
 	
 		add_perk();
 }
+
+
+function delete_fundraiser_perk(){
+	
+	if(isset($_GET['delete_perk']) && is_fundraiser_owner()){
+		
+		$id = mysql_prep($_GET['delete_perk']);
+		
+		$query = mysqli_query($GLOBALS['___mysqli_ston'],"DELETE FROM fundraiser_perks WHERE id='{$id}' LIMIT 1") or die('Error deleting perk '.mysqli_error());
+		if($query){
+			//~ echo 'i am here';
+			session_message('alert', 'Perk deleted');
+			redirect_to($_SESSION['prev_url']);
+			}
+		}
+	}
+
 
 # LIST fundraiserS
 
@@ -178,7 +220,7 @@ function get_fundraiser_lists($category='') {
   	$fundraiserlist = $fundraiserlist 
 	 . '<tr><td class="gainsboro">'.
 	$pic['thumbnail']
-  .'</td><td><a href="' .ADDONS_PATH .'fundraiser/?action=show&fundraiser_name=' .$result['fundraiser_name'] .'"> ' 
+  .'</td><td><a href="' .ADDONS_PATH .'fundraiser/?action=show&fid=' .$result['id'] .'"> ' 
   . ucfirst(str_ireplace('-',' ',$result['fundraiser_name']))
   . '</a><br>';
   
@@ -195,17 +237,15 @@ function get_fundraiser_lists($category='') {
   . ADDONS_PATH ."/fundraiser/edit/?" 
   . 'action='
   . 'edit&'
-  . 'fundraiser_name='
-  . $result['fundraiser_name']
-  . '&tid='
+  . 'fid='
   . $result['id']
   . '" '
   . '>edit </a> &nbsp; <a href="'
   . ADDONS_PATH ."fundraiser/process.php?" 
   . 'action='
   . 'delete&'
-  . 'fundraiser_name='
-  . $result['fundraiser_name']
+  . 'fid='
+  . $result['id']
   . '&deleted='
   . 'jfldjff7'
   . '" '
@@ -326,17 +366,18 @@ if($result['author'] == $_SESSION['username'] || is_admin()){
 	 
 	 #DETECT and switch between sections and fundraisers
 	 
-	 if(isset($_GET['fundraiser_name'])){
-	 $target = trim(mysql_prep($_GET['fundraiser_name']));
-	 $route = '&fundraiser_name=';
+	 if(isset($_SESSION['fundraiser_id'])){
+	 $target = mysql_prep($_SESSION['fundraiser_id']);
+	 $fundraiser_name = mysql_prep($_SESSION['fundraiser_name']);
+	 //$route = '&fundraiser_name=';
 	 $end = 'fundraiser';
 	 
 	 
 	 
 	 // now we show the fundraiser edit form
 	 echo "<strong> You are editing <em>&nbsp" . $target ." {$end} </em></strong>";
-	 echo '<p align="center">Go to <a id="view-fundraiser" href="' .ADDONS_PATH .'fundraiser?action=show'.$route .$target .'"><strong><big> ' 
-  . $target .' ' .$end
+	 echo '<p align="center">Go to <a id="view-fundraiser" href="' .ADDONS_PATH .'fundraiser?action=show&fid='.$target .'"><strong><big> ' 
+  . $fundraiser_name .' ' .$end
   . '</big></strong></a></p>';
 	 	
 
@@ -413,7 +454,7 @@ function get_fundraiser_grid(){
 				"<div class='fundraiser-block'>"
 				."<div class='grid'>
 					<div class='grid_titles'>
-						<a href='" .ADDONS_PATH ."fundraiser/?action=show&fundraiser_name={$result['fundraiser_name']}'>" . ucfirst($title) ."...
+						<a href='" .ADDONS_PATH ."fundraiser/?action=show&fid={$result['id']}'>" . ucfirst($title) ."...
 					</div>
 				</div>"
 				.$pic[0] 
@@ -437,45 +478,91 @@ function get_fundraiser_grid(){
 
 
 function donate($reciever='',$current_amount=''){
-	$balance = get_user_funds();
-	if($reciever != $_SESSION['username']){
-	echo '';
-	echo "<form method='post' action='./process.php'>
-	<br><span class='donate'><span class='green-text' align='center'>Support this campaign! - You have <span class='red-text'> N".$balance .".00</span><br></span>
-	NGN <input type='number' name='amount' value='' placeholder='amount to give' required> 
-	<input type='hidden' name='action' value='donate'>
-	<input type='hidden' name='current_amount' value='".$current_amount."'>
-	<input type='hidden' name='user_balance' value='".$balance."'>
-	<input type='hidden' name='reciever' value='".$reciever."'>
-	<input type='hidden' name='fundraiser_name' value='".$_GET['fundraiser_name']."'>
-	<input type='hidden' name='giver' value='".$_SESSION['username']."'>
-	<input type='hidden' name='add_funds' value='yes'>
-	<input type='hidden' name='reason' value='support ".$_GET['fundraiser_name']." fundraiser'></span>
-	<input type='submit' name='submit' value='Donate' class='button-primary'> </form>";
+	//show voguepay donate button
+	$merchant_id = '13302-13767';
+	$merchant_demo = 'demo';
+	$username = $_SESSION['username'];
+	$fundraiser = $_SESSION['fundraiser_name'];
+	$fundraiser_id = $_SESSION['fundraiser_id'];
+
+echo "<div class='row padding-20'><div class='col-md-12 col-xs-12'></div>";		
+echo "<div class='toggle-interswitch whitesmoke col-md-offset-1 col-md-5 col-xs-12 padding-10 margin-3'>support via interswitch</div>";
+echo "<div class='toggle-funds tan col-md-5 col-xs-12 padding-10 margin-3'>support via site funds</div>";
+echo "</div>";
+
+if($reciever != $_SESSION['username']){
+echo "<form class='inline-block aliceblue padding-10 margin-10 interswitch-pay' method='POST' action='https://voguepay.com/pay/'>
+
+<input type='hidden' name='v_merchant_id' value='".$merchant_id."' />";
+
+if(is_logged_in()){
+	echo "<input type='hidden' name='merchant_ref' value='".$fundraiser_id."' />";
 	} else {
-		echo '<p>';
-		status_message('alert','You cannot donate to your own fundraiser!');
+		echo "<input type='hidden' name='merchant_ref' value='Anonymous' />";
 		}
+echo "<input type='hidden' name='notify_url' value='".BASE_PATH."funds_manager/process.php' />
+<input type='hidden' name='success_url' value='".BASE_PATH."funds_manager/success.php' />
+<input type='hidden' name='memo' value='Support {$fundraiser}' />".
+'Choose Currency<br />
+<select name="cur" >
+<option value="NGN">NGN - Nigerian Naira</option>
+<option value="USD">USD - US Dollar</option>
+</select>
+<input type="hidden" name="v_merchant_id" value="13302-13767" />'.
+"<input type='hidden' name='notify_url' value='".ADDONS_PATH."funds_manager/process.php' />
+<input type='hidden' name='success_url' value='".ADDONS_PATH."funds_manager/success.php' />
+<input type='number' name='total' value='' placeholder='Amount to Give'/><br>
+Your details (so we can thank you) <br><input type='text' name='email' value='' placeholder='Email, name or Phone' /><br>".
 	
+'<input type="image" src="http://voguepay.com/images/buttons/donate_blue.png" alt="PAY" />'.
+"</form>";
+}
+	// donate with site funds
+	$balance = get_user_funds();
+	if(isset($_SESSION['username'])){
+		if($reciever != $_SESSION['username']){
+			echo "<form class='aliceblue padding-10 margin-10 site-funds-pay' method='post' action='".BASE_PATH."funds_manager/process.php'>
+			<strong>via site funds</strong>
+			<br><span class='donate'><span class='green-text' align='center'>Support this campaign! - You have <span class='red-text'> N".$balance .".00</span><br></span>
+			NGN <input type='number' name='amount' value='' placeholder='amount to give' required> 
+			<input type='hidden' name='action' value='donate'>
+			<input type='hidden' name='current_amount' value='".$current_amount."'>
+			<input type='hidden' name='user_balance' value='".$balance."'>
+			<input type='hidden' name='reciever' value='".$reciever."'>
+			<input type='hidden' name='fundraiser_name' value='".$_GET['fundraiser_name']."'>
+			<input type='hidden' name='giver' value='".$_SESSION['username']."'>
+			<input type='hidden' name='add_funds' value='yes'>
+			<input type='hidden' name='reason' value='support ".$_GET['fundraiser_name']." fundraiser'></span>
+			<input type='submit' name='submit' value='Donate' class='button-primary'> </form>";
+			} else {
+				echo '<p>';
+				status_message('alert','You cannot donate to your own fundraiser!');
+				}
+	} else { echo '<div class=" site-funds-pay">';
+		log_in_to_continue();
+		echo'</div>';}
+
 }
 
 
 function show_fundraiser(){
 	
-	if(!empty($_GET['action']) && !empty($_GET['fundraiser_name'])){
-		$fundraiser = trim(mysql_prep($_GET['fundraiser_name']));
-		$query = mysqli_query($GLOBALS["___mysqli_ston"], "SELECT * FROM `fundraiser` WHERE `fundraiser_name`='{$fundraiser}' LIMIT 1") 
+	if(!empty($_GET['action']) && !empty($_GET['fid'])){
+		$fundraiser_id = mysql_prep($_GET['fid']);
+		$query = mysqli_query($GLOBALS["___mysqli_ston"], "SELECT * FROM `fundraiser` WHERE `id`='{$fundraiser_id}' LIMIT 1") 
 		or die('ERROR SELECTING FUNDRAISER '.mysql_query());
 		
 		$result = mysqli_fetch_array($query);
 		$name = $result['fundraiser_name'] .' fundraiser';
 		
+		$_SESSION['fundraiser_name'] = $result['fundraiser_name'];
 		$_SESSION['fundraiser_id'] = $result['id'];
 		$_SESSION['status'] = $result['status'];
 		$_SESSION['author'] = $result['author'];
 		
 		echo "<section class='main-content-region'>";
 		
+		show_session_message();
 		
 		   # IF OWNER OR MANaGER, THEN SHOW EDIt link 
    if(isset($_SESSION['username'])){
@@ -529,11 +616,10 @@ function show_fundraiser(){
 			echo '<div class="fundraiser-goal-alone"><span class="target-text">Target:<span class="target-amount"> NGN'.number_format($result['target_amount']).'.00</span></span>
 			<progress align="center" value="'.$result['amount_raised'].'" min="0" max="'.$result['target_amount']. '"></progress>
 			<span class="target-text">Raised: <span class="target-amount"> NGN'.$result['amount_raised'].'.00</span></span>';
-		if(isset($_SESSION['username'])){
-			donate($reciever=$result['author'], $current_amount=$result['amount_raised']);
-		}
-			echo "</div>";
 			
+		
+			echo "</div>";
+			donate($reciever=$result['author'], $current_amount=$result['amount_raised']);
 			
 	# Print content	
 			echo "<div class='page-content'><h2> Reason :</h2>". parse_text_for_output($result['reason']) ."".
@@ -585,13 +671,15 @@ function show_fundraiser(){
 		}
 }
 
-function show_fundraiser_donors_list($fundraiser_name, $author){
+function show_fundraiser_donors_list(){
 	if(isset($_POST['author'])){
 		$author = $_POST['author'];
 		} 
 	if(isset($_POST['donor'])){
 		$donor = $_POST['donor'];
 		}
+	$fundraiser_id = $_SESSION['fundraiser_id'];
+	$author = $_SESSION['author'];
 
  #Show the fundraiser title
  echo "<div align='center'><strong><a href='".ADDONS_PATH. 
@@ -610,13 +698,13 @@ function show_fundraiser_donors_list($fundraiser_name, $author){
 	
 	
 	if($_POST['submit']==='See donors list'){
-		$query = mysqli_query($GLOBALS["___mysqli_ston"], "SELECT * FROM `fundraiser_donors` WHERE `fundraiser_name`='{$fundraiser_name}' AND `recipient`='{$author}' ORDER BY `id` DESC") 
+		$query = mysqli_query($GLOBALS["___mysqli_ston"], "SELECT * FROM `payment_transactions` WHERE `target`='{$fundraiser_id}' AND `target_type`='fundraiser' ORDER BY `id` DESC") 
 		or die ("Donor selection failed!" . ((is_object($GLOBALS["___mysqli_ston"])) ? mysqli_error($GLOBALS["___mysqli_ston"]) : (($___mysqli_res = mysqli_connect_error()) ? $___mysqli_res : false)));
 		$total = mysqli_num_rows($query);
-		echo "<h2>Total of {$total} persons have contributed to the Fundraiser :". ucfirst($fundraiser_name)."</h2><br>";
+		echo "<h2>Total of {$total} persons have contributed to the Fundraiser :". ucfirst($_SESSION['fundraiser_name'])."</h2><br>";
 	
 	} else if($_POST['submit']==='Search donors by name'){
-		$query = mysqli_query($GLOBALS["___mysqli_ston"], "SELECT * FROM `fundraiser_donors` WHERE `fundraiser_name`='{$fundraiser_name}' AND `donor`='{$donor}' ORDER BY `id` DESC") 
+		$query = mysqli_query($GLOBALS["___mysqli_ston"], "SELECT * FROM `payment_transactions` WHERE `target`='{$fundraiser_id}' AND `donor`='{$donor}' ORDER BY `id` DESC") 
 		or die ("Donor selection failed!" . ((is_object($GLOBALS["___mysqli_ston"])) ? mysqli_error($GLOBALS["___mysqli_ston"]) : (($___mysqli_res = mysqli_connect_error()) ? $___mysqli_res : false)));
 		$total = mysqli_num_rows($query);
 		
