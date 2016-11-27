@@ -193,11 +193,12 @@ $amount = trim(mysql_prep($_POST['amount']));
 
 
 
-if(isset($_POST['reciever'])){
+if($reciever == '' && isset($_POST['reciever'])){
 $reciever = trim(mysql_prep($_POST['reciever']));
 } else if(isset($_POST['account_to_top_up'])){
 $reciever = trim(mysql_prep($_POST['account_to_top_up']));
-}
+} else {$reciever = $_SESSION['username'];}
+
 
 if($giver===''){
 $giver = $_SESSION['username'];
@@ -223,20 +224,18 @@ $today = $time['weekday'] .' '. $time['mday'].' '. $time['month'].' '. $time['ye
 
 # Try to resolve current reciever balance
 
-$bal_query = mysqli_query($GLOBALS["___mysqli_ston"], "SELECT `site_funds_amount` from user WHERE `user_name`='{$reciever}'") 
-or die("Balance inqury query failed!") .((is_object($GLOBALS["___mysqli_ston"])) ? mysqli_error($GLOBALS["___mysqli_ston"]) : (($___mysqli_res = mysqli_connect_error()) ? $___mysqli_res : false));
-
-if($bal_query){ $bal_result = mysqli_fetch_array($bal_query);}
+$reciever_balance = get_user_funds();
 
 # ADD OR SUBTRACT BASED ON USER CHOICE
 if($action =='add'){
 			$amount = $amount;
 			} else if ($action === 'subtract'){
-				$amount = "-" .$amount;
-				}//echo 'Amount = '.$amount;//Testing purposes
+				$amount = -0 - $amount;
+				}//echo 'Amount = '.$amount; //Testing purposes
 			
-$balance = $bal_result['site_funds_amount'];
-$new_reciever_balance = $balance + ($amount);
+
+$new_reciever_balance = $reciever_balance + ($amount);
+//~ echo $new_reciever_balance;
 
 //echo "<br><br>" .$new_reciever_balance;// testing purposes
 $giver_balance = get_user_funds();
@@ -245,18 +244,29 @@ $new_giver_balance = $giver_balance - $amount;
 //die('I enter 2');
 # PROCEED
 
-	if(!empty($_POST['add_funds']) || !empty($amount) || isset($_POST['transaction_id']) || $_POST['action'] == 'load_top_up'){
+	if(!empty($_POST['add_funds']) || !empty($amount) || isset($_POST['transaction_id']) || $_POST['action'] == 'load_top_up' ){
 	
 		
-//~ # do add funds 
-		//~ if($_POST['action'] == 'donate' ){
-		//~ #echo "Doing add funds manager!" //testing purposes
-		//~ # reciever
-		//~ $fm_query = mysqli_query($GLOBALS["___mysqli_ston"], "INSERT INTO `funds_manager`(`id`, `giver`, `reciever`, `amount`, `time`, `reason`, `balance`) VALUES 
-		//~ ('0', '{$giver}', '{$reciever}', '{$amount}', '{$today}', '{$reason}', '{$new_reciever_balance}')") 
-		//~ or die("Add funds failed" . ((is_object($GLOBALS["___mysqli_ston"])) ? mysqli_error($GLOBALS["___mysqli_ston"]) : (($___mysqli_res = mysqli_connect_error()) ? $___mysqli_res : false)));
-		//~ }
-		//~ 
+# do add funds 
+		if($_POST['action'] == 'donate' || $_POST['intent'] == 'support'){
+		
+		# reciever
+		$fm_query = mysqli_query($GLOBALS["___mysqli_ston"], "INSERT INTO `funds_manager`(`id`, `giver`, `reciever`, `amount`, `time`, `reason`, `balance`) VALUES 
+		('0', '{$giver}', '{$reciever}', '{$amount}', '{$today}', '{$reason}', '{$new_reciever_balance}')") 
+		or die("Add funds failed" . ((is_object($GLOBALS["___mysqli_ston"])) ? mysqli_error($GLOBALS["___mysqli_ston"]) : (($___mysqli_res = mysqli_connect_error()) ? $___mysqli_res : false)));
+		
+		
+		# Updating reciever balance 
+		$update_reciever_amount = mysqli_query($GLOBALS["___mysqli_ston"], "UPDATE `user` SET `site_funds_amount`='{$new_reciever_balance}' WHERE `user_name`='{$reciever}'") 
+		or die("Could not update new Amount!") . ((is_object($GLOBALS["___mysqli_ston"])) ? mysqli_error($GLOBALS["___mysqli_ston"]) : (($___mysqli_res = mysqli_connect_error()) ? $___mysqli_res : false));
+		
+		if($update_reciever_amount){
+			status_message('alert','Your balance has been updated!');
+			}
+		//echo 'New reciever balance is: '. $new_reciever_balance;
+		
+		}
+		
 # do vote in contest 
 		if($_POST['action'] == 'vote-contest'){
 		$user_funds = get_user_funds();	
@@ -269,7 +279,7 @@ $new_giver_balance = $giver_balance - $amount;
 		or die("Add funds failed" . ((is_object($GLOBALS["___mysqli_ston"])) ? mysqli_error($GLOBALS["___mysqli_ston"]) : (($___mysqli_res = mysqli_connect_error()) ? $___mysqli_res : false)));
 		
 		# Updating reciever balance 
-		$update_reciever_amount = mysqli_query($GLOBALS["___mysqli_ston"], "UPDATE `user` SET `site_funds_amount`='{$balance}' WHERE `user_name`='{$reciever}'") 
+		$update_reciever_amount = mysqli_query($GLOBALS["___mysqli_ston"], "UPDATE `user` SET `site_funds_amount`='{$new_reciever_balance}' WHERE `user_name`='{$reciever}'") 
 		or die("Could not update new Amount!") . ((is_object($GLOBALS["___mysqli_ston"])) ? mysqli_error($GLOBALS["___mysqli_ston"]) : (($___mysqli_res = mysqli_connect_error()) ? $___mysqli_res : false));
 			
 		}
@@ -285,7 +295,7 @@ $new_giver_balance = $giver_balance - $amount;
 		or die("Add funds failed" . ((is_object($GLOBALS["___mysqli_ston"])) ? mysqli_error($GLOBALS["___mysqli_ston"]) : (($___mysqli_res = mysqli_connect_error()) ? $___mysqli_res : false)));
 		
 		# Updating reciever balance 
-			$update_reciever_amount = mysqli_query($GLOBALS["___mysqli_ston"], "UPDATE `user` SET `site_funds_amount`='{$balance}' WHERE `user_name`='{$reciever}'") 
+			$update_reciever_amount = mysqli_query($GLOBALS["___mysqli_ston"], "UPDATE `user` SET `site_funds_amount`='{$new_reciever_balance}' WHERE `user_name`='{$reciever}'") 
 			or die("Could not update new Amount!") . ((is_object($GLOBALS["___mysqli_ston"])) ? mysqli_error($GLOBALS["___mysqli_ston"]) : (($___mysqli_res = mysqli_connect_error()) ? $___mysqli_res : false));
 		
 		

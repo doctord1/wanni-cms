@@ -22,6 +22,7 @@ go_back();
 $id = htmlentities($_POST['id']); 
 $transaction_id = $_POST['transaction_id'];
 $fundraiser_name = str_ireplace(' ','-',trim(mysql_prep(strtolower($_POST['fundraiser_name']))));
+$fundraiser_id = mysql_prep($_SESSION['fundraiser_id']);
 $active = trim(mysql_prep($_POST['active']));
 $position = htmlentities($_POST['position']);
 $reason = trim(mysql_prep($_POST['reason']));
@@ -59,7 +60,7 @@ if (isset($submitted) && $action ==='insert'){
 	
 	else 
 	{
-		$insert_query = mysqli_query($GLOBALS["___mysqli_ston"], "INSERT INTO `fundraiser`(`id`, `fundraiser_name`, `reason`, `perks`, `target_amount`, `amount_raised`, `author`, `editor`, `status`, `created`, `last_updated`, `start_date`, `end_date`) 
+		$insert_query = mysqli_query($GLOBALS["___mysqli_ston"], "INSERT INTO `fundraiser`(`id`, `fundraiser_name`, `reason`, `target_amount`, `amount_raised`, `author`, `editor`, `status`, `created`, `last_updated`, `start_date`, `end_date`) 
 		VALUES ('0', '{$fundraiser_name}', '{$reason}', '{$perks}', '{$target_amount}', '', '{$author}', '', '{$status}', '{$created}', '{$last_updated}',  '{$start_date}', '{$end_date}')")
 		 or die ("Database insert failed!". ((is_object($GLOBALS["___mysqli_ston"])) ? mysqli_error($GLOBALS["___mysqli_ston"]) : (($___mysqli_res = mysqli_connect_error()) ? $___mysqli_res : false)));
 	}
@@ -117,8 +118,8 @@ if(isset($updated) && $action ==='update'){
 		if ($fundraiser_name === ''){ echo "<div class='error'>Fundraiser name is required!</div>" ;}
 		else 
 		{	
-		$update_query = mysqli_query($GLOBALS["___mysqli_ston"], "UPDATE fundraiser SET reason='{$reason}', perks='{$perks}', `editor`='{$editor}', last_updated='{$last_updated}' 
-		WHERE fundraiser_name='{$fundraiser_name}' LIMIT 1") or die("Database UPDATE failed!". ((is_object($GLOBALS["___mysqli_ston"])) ? mysqli_error($GLOBALS["___mysqli_ston"]) : (($___mysqli_res = mysqli_connect_error()) ? $___mysqli_res : false)));
+		$update_query = mysqli_query($GLOBALS["___mysqli_ston"], "UPDATE fundraiser SET reason='{$reason}', `editor`='{$editor}', last_updated='{$last_updated}', `start_date`='{$start_date}', `end_date`='{$end_date}' 
+		WHERE id='{$fundraiser_id}' LIMIT 1") or die("Database UPDATE failed!". ((is_object($GLOBALS["___mysqli_ston"])) ? mysqli_error($GLOBALS["___mysqli_ston"]) : (($___mysqli_res = mysqli_connect_error()) ? $___mysqli_res : false)));
 		 
 	 
 	 if($update_query) {
@@ -132,10 +133,8 @@ if(isset($updated) && $action ==='update'){
 					$parent='fundraiser'
 					);
 					
-		echo "<div align='center'><h2>Go to - <a href='".ADDONS_PATH."?fundraiser_name={$fundraiser_name}'>{$fundraiser_name}</a> fundraiser</h2></div>"; 
+		echo "<div align='center'><h2>Go to - <a href='".ADDONS_PATH."fundraiser/?action=show&fid={$fundraiser_id}'>{$fundraiser_name}</a> fundraiser</h2></div>"; 
 		echo status_message('success', 'Fundraiser saved successfully!');
-		echo "<div align='center'><a href='".BASE_PATH."?section_name=fundraiser'> GO to fundraiser section</a><br>";
-		
 		"</div>";
 		
 		

@@ -42,7 +42,10 @@ function fundraiser_settings(){
 
 # ADD fundraiserS
 function add_fundraiser() {
-	
+	//calculate end date
+$now = date('l jS F');
+$one_month = date('l jS F', strtotime('+4 weeks'));
+			
 $minimum_balance = 200;
 $current_user_balance = get_user_funds();
 
@@ -63,7 +66,7 @@ $form = '<div class="edit-form page_content">
 	<br> Target Amount : <br>NGN <input type="number" name="target_amount" maxlength="" value="">
 	<br> Start date: (Campaign will end exactly 45 days after this start date on '; $form .= $date; $form.=')<br>
 	<input type="text" id="datepicker" name="start_date" value="'.date('d/m/Y').'" > <br>
-	<input type="hidden" id="datepicker" name="end_date" value="'.date('d-m-Y', strtotime("+45 days")).'" > <br>
+	<input type="hidden" id="datepicker" name="end_date" value="'.$one_month.'" > <br>
 	Make project :<input type="checkbox" name="make_project" value="yes" class="checked">(Select to automatically create a project page for this fundraiser)<br>
 	<input type="submit" name="submitted" value="Add fundraiser" class="submit">
 
@@ -336,20 +339,22 @@ function show_my_fundraisers() {
  
 # EDIT fundraiserS  
 function edit_fundraiser(){
+$now = date('l jS F');
+$one_month = date('l jS F', strtotime('+4 weeks'));
 
 if(url_contains('edit')){
-$fundraiser = $_GET['fundraiser_name']; 
+$fundraiser = mysql_prep($_GET['fid']); 
 #echo $block; // Testing
 }	
 
 if(isset($fundraiser)){
-	$query = mysqli_query($GLOBALS["___mysqli_ston"], "SELECT * from fundraiser WHERE fundraiser_name='{$fundraiser}' LIMIT 1") 
+	$query = mysqli_query($GLOBALS["___mysqli_ston"], "SELECT * from fundraiser WHERE id='{$fundraiser}' LIMIT 1") 
 	or die("Failed to get selected fundraiser" . ((is_object($GLOBALS["___mysqli_ston"])) ? mysqli_error($GLOBALS["___mysqli_ston"]) : (($___mysqli_res = mysqli_connect_error()) ? $___mysqli_res : false)));
 	 
 	 $result = mysqli_fetch_array($query);
 }
 
-if($result['author'] == $_SESSION['username'] || is_admin()){	
+if(($result['author'] == $_SESSION['username'] || is_admin()) && $result['status'] == 'pending'){	
 
 	
 	//Check if update is requested and show edit form
@@ -357,7 +362,7 @@ if($result['author'] == $_SESSION['username'] || is_admin()){
 	 	
 	 $query = mysqli_query($GLOBALS["___mysqli_ston"], 
 	 "select * from fundraiser " .
-	 'where fundraiser_name="' .
+	 'where id="' .
 	 $fundraiser .
 	 '" ' .
 	 " limit 1") or die("Failed to get selected fundraiser" . ((is_object($GLOBALS["___mysqli_ston"])) ? mysqli_error($GLOBALS["___mysqli_ston"]) : (($___mysqli_res = mysqli_connect_error()) ? $___mysqli_res : false)));
@@ -366,8 +371,8 @@ if($result['author'] == $_SESSION['username'] || is_admin()){
 	 
 	 #DETECT and switch between sections and fundraisers
 	 
-	 if(isset($_SESSION['fundraiser_id'])){
-	 $target = mysql_prep($_SESSION['fundraiser_id']);
+	 if(isset($fundraiser)){
+	 $target = $fundraiser;
 	 $fundraiser_name = mysql_prep($_SESSION['fundraiser_name']);
 	 //$route = '&fundraiser_name=';
 	 $end = 'fundraiser';
@@ -387,15 +392,14 @@ $form = '<div class="edit-form">
 <input type="hidden" name="author" value ="'.$_SESSION['username'].'" >
 <input type="hidden" name="back_url" value ="'.$_SERVER['HTTP_REFERER'] .'" >
 Fundraiser name <input type="text" name="fundraiser_name" class="menu-item-form" value="'.$result['fundraiser_name'].'" >
-<br>Active:(Yes) <input type="checkbox" name="visible" value="'.$result['active'].'" checked="checked" class="checked">
+<br>Activate:(Yes) <input type="checkbox" name="visible" value="yes" checked="checked" class="checked">
 
 <br><br>Position:(<em>Starting from 0, higher numbers will appear last</em>)<br><input type="hidden" name="position" value="'.$result['position'].'" size="3" maxlength="3">
 <br>Reason:<br><textarea name="reason" id="content-area" size="8">'.$result['reason'].'</textarea>
-<br>Perks (if any):<br><textarea name="perks" id="content-area" size="8">'.$result['perks'].'</textarea>
 <br> Target Amount : <br>NGN <input type="hidden" name="target_amount" maxlength="" value="'.$result['target_amount'].'">'.$result['target_amount'].'
 <br> Start date: (Campaign will end exactly 45 days after this start date)<br>
-<input type="disabled" name="start_date" value="'.$result['start_date'].'"> <br>
-<input type="hidden" name="start_date" value="'.$result['end_date'].'"> <br>
+<input type="disabled" name="start_date" value="'.$now.'"> <br>
+<input type="hidden" name="end_date" value="'.$one_month.'"> <br>
 <input type="submit" name="updated" value="Save changes" class="submit">
 </form></div>';
 
@@ -477,7 +481,7 @@ function get_fundraiser_grid(){
 
 
 
-function donate($reciever='',$current_amount=''){
+function donate($fundraiser_owner='',$current_amount=''){
 	//show voguepay donate button
 	$merchant_id = '13302-13767';
 	$merchant_demo = 'demo';
@@ -490,7 +494,7 @@ echo "<div class='toggle-interswitch whitesmoke col-md-offset-1 col-md-5 col-xs-
 echo "<div class='toggle-funds tan col-md-5 col-xs-12 padding-10 margin-3'>support via site funds</div>";
 echo "</div>";
 
-if($reciever != $_SESSION['username']){
+if($fundraiser_owner != $_SESSION['username']){
 echo "<form class='inline-block aliceblue padding-10 margin-10 interswitch-pay' method='POST' action='https://voguepay.com/pay/'>
 
 <input type='hidden' name='v_merchant_id' value='".$merchant_id."' />";
@@ -520,19 +524,24 @@ Your details (so we can thank you) <br><input type='text' name='email' value='' 
 	// donate with site funds
 	$balance = get_user_funds();
 	if(isset($_SESSION['username'])){
-		if($reciever != $_SESSION['username']){
-			echo "<form class='aliceblue padding-10 margin-10 site-funds-pay' method='post' action='".BASE_PATH."funds_manager/process.php'>
+		if($fundraiser_owner != $_SESSION['username']){
+			echo "<form class='aliceblue padding-10 margin-10 site-funds-pay' method='post' action='".BASE_PATH."funds_manager/success.php'>
 			<strong>via site funds</strong>
 			<br><span class='donate'><span class='green-text' align='center'>Support this campaign! - You have <span class='red-text'> N".$balance .".00</span><br></span>
 			NGN <input type='number' name='amount' value='' placeholder='amount to give' required> 
-			<input type='hidden' name='action' value='donate'>
+			<input type='hidden' name='intent' value='support'>
+			<input type='hidden' name='add_funds' value='subtract'>
+			<input type='hidden' name='channel' value='site funds'>
+			<input type='hidden' name='memo' value='donate with site funds'>
 			<input type='hidden' name='current_amount' value='".$current_amount."'>
 			<input type='hidden' name='user_balance' value='".$balance."'>
-			<input type='hidden' name='reciever' value='".$reciever."'>
-			<input type='hidden' name='fundraiser_name' value='".$_GET['fundraiser_name']."'>
+			<input type='hidden' name='reciever' value='".$_SESSION['username']."'>
+			<input type='hidden' name='fundraiser_author' value='".$fundraiser_author."'>
+			<input type='hidden' name='fundraiser_name' value='".$_SESSION['fundraiser_name']."'>
+			<input type='hidden' name='target' value='".$_SESSION['fundraiser_id']."'>
+			<input type='hidden' name='target_type' value='fundraiser'>
 			<input type='hidden' name='giver' value='".$_SESSION['username']."'>
-			<input type='hidden' name='add_funds' value='yes'>
-			<input type='hidden' name='reason' value='support ".$_GET['fundraiser_name']." fundraiser'></span>
+			<input type='hidden' name='reason' value='support [".$_SESSION['fundraiser_name']."] fundraiser'></span>
 			<input type='submit' name='submit' value='Donate' class='button-primary'> </form>";
 			} else {
 				echo '<p>';
@@ -573,7 +582,7 @@ function show_fundraiser(){
 
 
 							echo '<li id="show_blocks_form_link" class="float-right-lists">
-								<a href="'.ADDONS_PATH .'fundraiser/edit/?action=edit&fundraiser_name='. $result['fundraiser_name'].'"> Edit fundraiser </a></li>	';		
+								<a href="'.ADDONS_PATH .'fundraiser/edit/?action=edit&fid='. $result['id'].'"> Edit fundraiser </a></li>	';		
 						}
 
 			echo '<li id="add_page_form_link" class="float-right-lists">
@@ -610,16 +619,25 @@ function show_fundraiser(){
 		 if(isset($pics)) { 
 			 show_slideshow_block($pics);
 			 }
+			 
+		if($_SESSION['status'] == 'active'){
 		    claim_fundraiser_perk();  
 				
-	# Print goal bar
+			# Print goal bar
 			echo '<div class="fundraiser-goal-alone"><span class="target-text">Target:<span class="target-amount"> NGN'.number_format($result['target_amount']).'.00</span></span>
 			<progress align="center" value="'.$result['amount_raised'].'" min="0" max="'.$result['target_amount']. '"></progress>
 			<span class="target-text">Raised: <span class="target-amount"> NGN'.$result['amount_raised'].'.00</span></span>';
-			
-		
 			echo "</div>";
+			
 			donate($reciever=$result['author'], $current_amount=$result['amount_raised']);
+			
+			}
+			if($_SESSION['status'] == 'pending'){
+			status_message('alert','this fundraiser is not yet active');	
+			}
+			if($_SESSION['status'] == 'finished'){
+			status_message('alert', 'This fundraiser has ended!');
+			}
 			
 	# Print content	
 			echo "<div class='page-content'><h2> Reason :</h2>". parse_text_for_output($result['reason']) ."".
@@ -646,8 +664,9 @@ function show_fundraiser(){
 			echo "<strong>Author : </strong><a href='".BASE_PATH.'user?user='.$result['author']."'>".$result['author']."</a></strong><br>";
 			echo $author['thumbnail'];
 			
-		echo "<h2>Fundraiser status :</h2><div class='fundraiser-status'> ".$result['status']."</div>".
-			"<h2>Amount raised :</h2><div class='amount-raised-big'> NGN ".number_format($result['amount_raised']).".00</div>";
+		echo "<h2>Target Amount :<hr><div class='fundraiser-status'> NGN ".number_format($result['target_amount']).".00</div></h2>".
+			"<h2>Fundraiser status :<hr></h2><div class='fundraiser-status'> ".$result['status']."</div>".
+			"<h2>Amount raised :<hr><div class='amount-raised-big'> NGN ".number_format($result['amount_raised']).".00</div></h2>";
 			
 			
 		echo "<h2>Perks: </h2><div class='perks'> </div>";
@@ -672,6 +691,7 @@ function show_fundraiser(){
 }
 
 function show_fundraiser_donors_list(){
+	
 	if(isset($_POST['author'])){
 		$author = $_POST['author'];
 		} 
@@ -684,7 +704,7 @@ function show_fundraiser_donors_list(){
  #Show the fundraiser title
  echo "<div align='center'><strong><a href='".ADDONS_PATH. 
  "fundraiser/?action=show&fundraiser_name=".$_POST['fundraiser_name'] .
- "'>".ucfirst(str_ireplace('-',' ',($_POST['fundraiser_name'])))."</a></strong></div>";
+ "&fid=".$_SESSION['fundraiser_id']."'>".ucfirst(str_ireplace('-',' ',($_POST['fundraiser_name'])))."</a></strong></div>";
 	
 		#Search donors
 	

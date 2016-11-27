@@ -7,18 +7,25 @@ ini_alter
  // Start the output buffer
 
 require_once('includes/functions.php');
-	
-	
-if((!is_logged_in() || $_SERVER['HTTP_REFERRER'] != string_contains('geniusaid.org')) && 
-$_SESSION['free_view_count'] < 2){
+$page_path = 'http://'.$_SERVER['HTTP_HOST'] .$_SERVER['REQUEST_URI'];	
+$referer_string = $_SERVER['HTTP_REFERRER'];
+if((!is_logged_in() && $page_path == BASE_PATH) 
+|| (string_contains($referer_string,'facebook.com') 
+|| string_contains($referer_string,'addthis.com')) 
+&& $_SESSION['free_view_count'] < 2){
 	$_SESSION['free_view_count']++;
 	redirect_to(BASE_PATH.'user/');
-	
-}else if(!url_contains('page_name=') && !url_contains('section_name=')){
-	  $destination = BASE_PATH . '?page_name=home';
-	//echo "<script> window.location.replace('{$destination}') </script>";
-	redirect_to($destination);
 }
+
+if(is_logged_in() && $page_path == BASE_PATH){
+	redirect_to(BASE_PATH.'?page_name=home');
+	}
+
+//~ }else if(!url_contains('page_name=') && !url_contains('section_name=')){
+	  //~ $destination = BASE_PATH . '?page_name=home';
+	//~ //echo "<script> window.location.replace('{$destination}') </script>";
+	//~ redirect_to($destination);
+//~ }
 $_SESSION['addon_home'] ='';
 //start_page(); 
 # 					DO NOT EDIT ABOVE THIS LINE
