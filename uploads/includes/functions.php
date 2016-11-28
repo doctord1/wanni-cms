@@ -37,6 +37,7 @@ z-index: 10000;
 # FILE UPLOADS
 
 function upload_image($r='',$folder='', $instruction='', $comment_id='') {
+	if(is_logged_in()){
 	#$folder should end in a forward slash eg $folder = 'user/'
 	global $r;
 
@@ -187,7 +188,7 @@ imagecopyresampled($newImg, $im, 0, 0, 0, 0, $nWidth, $nHeight, $imgInfo[0], $im
 		if(!$query) {echo "<div class='alert'>Error : No file uploaded!\n</div>"; } 
 		redirect_to($destination_url);
 	} 
-	
+
 }
 //echo 'Here is some more debugging info:' .$_FILES['image_field']['error']; //testing
 	
@@ -209,6 +210,7 @@ imagecopyresampled($newImg, $im, 0, 0, 0, 0, $nWidth, $nHeight, $imgInfo[0], $im
 	upload_attachment();
 	show_linked_attachments();
 	}
+} // end is_logged_in
 }
 
 

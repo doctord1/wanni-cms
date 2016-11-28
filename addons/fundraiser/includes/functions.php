@@ -64,9 +64,9 @@ $form = '<div class="edit-form page_content">
 	<br>Reason:<br><textarea name="reason" id="content-area" size="8"></textarea>
 	<br>Perks (if any):<br><textarea name="perks" id="content-area" size="8"></textarea>
 	<br> Target Amount : <br>NGN <input type="number" name="target_amount" maxlength="" value="">
-	<br> Start date: (Campaign will end exactly 45 days after this start date on '; $form .= $date; $form.=')<br>
-	<input type="text" id="datepicker" name="start_date" value="'.date('d/m/Y').'" > <br>
-	<input type="hidden" id="datepicker" name="end_date" value="'.$one_month.'" > <br>
+	<br> Start date: (Campaign will end exactly 45 days after today '; $form .= $date; $form.=')<br>
+	<input type="hidden" name="start_date" value="'.$now.'" > <br>
+	<input type="hidden" name="end_date" value="'.$one_month.'" > <br>
 	Make project :<input type="checkbox" name="make_project" value="yes" class="checked">(Select to automatically create a project page for this fundraiser)<br>
 	<input type="submit" name="submitted" value="Add fundraiser" class="submit">
 
@@ -200,11 +200,22 @@ function delete_fundraiser_perk(){
 
 # LIST fundraiserS
 
-function get_fundraiser_lists($category='') {
-	
-	if($category != ''){
-		$condition = " WHERE category='{$category}'";		
+function get_fundraiser_lists($category='',$status='') {
+	if($category != '' && $status == ''){
+		$condition = "WHERE category='{$category}' and status='active'";
+		}
+	else if($category != '' && $status != ''){
+		$condition = " WHERE category='{$category}' and status='{$status}'";		
 	}
+	
+	else if($category == '' && $status != ''){
+		$condition = " WHERE status='{$status}'";		
+	}
+	
+	else{
+		$condition = " WHERE status='active'";		
+	}
+	
 	
 	if(url_contains('page_name=home')){
 		$query = mysqli_query($GLOBALS["___mysqli_ston"], "SELECT * FROM `fundraiser` {$condition} ORDER BY `id` DESC 
@@ -220,12 +231,16 @@ function get_fundraiser_lists($category='') {
   
   while($result = mysqli_fetch_array($query)){
 	  $pic = show_user_pic($user=$result['author'],$pic_class='img-rounded',$length='');
+	  
+	$time = strtotime($result['end_date']);
+	$remaining = time_elapsed($time);
+	
   	$fundraiserlist = $fundraiserlist 
 	 . '<tr><td class="gainsboro">'.
 	$pic['thumbnail']
   .'</td><td><a href="' .ADDONS_PATH .'fundraiser/?action=show&fid=' .$result['id'] .'"> ' 
   . ucfirst(str_ireplace('-',' ',$result['fundraiser_name']))
-  . '</a><br>';
+  . '</a> <span class="timeago">'.$remaining.'</span><br>';
   
   
   # Print goal bar
@@ -254,7 +269,7 @@ function get_fundraiser_lists($category='') {
   . '" '
   . '>delete </a></span>';
   }
-	$fundraiserlist .= "<span class='grey-text'> <em>fundraiser</em></span></td>";
+	$fundraiserlist .= "<span class='grey-text'> <em>fundraiser</em></span> </td>";
 		}
 
   
@@ -284,12 +299,19 @@ function show_my_fundraisers() {
   
   while($result = mysqli_fetch_array($query)){
 	  $pic = show_user_pic($user=$result['author'],$pic_class='img-rounded',$length='');
+	  
+	  $time = strtotime($result['end_date']);
+	  $remaining = time_elapsed($time);
+	  
   	$fundraiserlist = $fundraiserlist 
 	 . '<tr><td class="gainsboro">'.
 	$pic['thumbnail']
-  .'</td><td><a href="' .ADDONS_PATH .'fundraiser/?action=show&fundraiser_name=' .$result['fundraiser_name'] .'"> ' 
-  . ucfirst(str_ireplace('-',' ',$result['fundraiser_name']))
-  . '</a><br>';
+  .'</td><td><a href="' .ADDONS_PATH .'fundraiser/?action=show&fid=' .$result['id'] .'"> ' 
+  . ucfirst(str_ireplace('-',' ',$result['fundraiser_name']));
+  
+  if($_SESSION['status']  == 'active'){
+  $fundraiserlist .= '</a><span class="timeago">'.$remaining.'</span><br>';
+  }
   
   
   # Print goal bar
@@ -397,8 +419,8 @@ Fundraiser name <input type="text" name="fundraiser_name" class="menu-item-form"
 <br><br>Position:(<em>Starting from 0, higher numbers will appear last</em>)<br><input type="hidden" name="position" value="'.$result['position'].'" size="3" maxlength="3">
 <br>Reason:<br><textarea name="reason" id="content-area" size="8">'.$result['reason'].'</textarea>
 <br> Target Amount : <br>NGN <input type="hidden" name="target_amount" maxlength="" value="'.$result['target_amount'].'">'.$result['target_amount'].'
-<br> Start date: (Campaign will end exactly 45 days after this start date)<br>
-<input type="disabled" name="start_date" value="'.$now.'"> <br>
+<br> Start date: (Campaign will end exactly 4 weeks after this sdate)<br>
+<input type="text" name="start_date" value="'.$now.'"> <br>
 <input type="hidden" name="end_date" value="'.$one_month.'"> <br>
 <input type="submit" name="updated" value="Save changes" class="submit">
 </form></div>';
@@ -407,7 +429,15 @@ echo $form;
 	}
 
 	}
-}
+} else {
+	status_message('alert','You cannot edit a fundraiser once it is Active.<br>
+	You may only add or remove perks.');
+	
+	 echo '<p align="center"><a id="view-fundraiser" href="' .ADDONS_PATH .'fundraiser?action=show&fid='
+	 .$_SESSION['fundraiser_id'] .'"><strong><big>&laquo; Return to fundraiser</big></strong></a></p>';
+	
+	}
+
 }
  
 function get_linked_fundraiser_media($subject_name='',$pic_size=''){
@@ -435,7 +465,7 @@ function get_fundraiser_grid(){
 	$pager = pagerize(6);
 	$limit = $_SESSION['pager_limit'];
 	 
- $query = mysqli_query($GLOBALS["___mysqli_ston"], "select * from fundraiser order by id DESC")
+ $query = mysqli_query($GLOBALS["___mysqli_ston"], "select * from fundraiser where status='active' order by id DESC LIMIT 20")
  or die("Failed to get fundraisers!" . ((is_object($GLOBALS["___mysqli_ston"])) ? mysqli_error($GLOBALS["___mysqli_ston"]) : (($___mysqli_res = mysqli_connect_error()) ? $___mysqli_res : false)));
  
 
@@ -444,7 +474,7 @@ function get_fundraiser_grid(){
 	$is_mobile = check_user_agent('mobile');
 			
 	 
-	//echo "<h2 align='center'>Fundraisers</h2>";
+	echo "<h2 align='center'>Active Fundraisers</h2>";
 	while($result= mysqli_fetch_array($query)) {
 		
 
@@ -452,6 +482,12 @@ function get_fundraiser_grid(){
 	$name = $result['fundraiser_name'] .' fundraiser';
 	$desc = substr($result['reason'],0,60);
 	$image_name = $result['fundraiser_name']." fundraiser";
+	
+	$percent_raised = $result['amount_raised']/$result['target_amount'] * 100;
+	
+	$time = strtotime($result['end_date']);
+	$remaining = time_elapsed($time);
+	//~ echo $percent_raised;
 
 		$pic = get_linked_fundraiser_media($subject_name = $name,$pic_size='medium');
 		echo " ".
@@ -468,8 +504,8 @@ function get_fundraiser_grid(){
 				.'...</a></div>'
 				.'<div class="fundraiser-goal"><span class="target-text">Target:<span class="target-amount"> NGN'.number_format($result['target_amount']).'.00</span></span>
 				<progress align="center" value="'.$result['amount_raised'].'" min="0" max="'.$result['target_amount']. '"></progress>
-				<span class="target-text">Raised: <span class="target-amount"> NGN'.$result['amount_raised'].'.00</span></span></div>'
-			
+				<span class="target-text">Raised: <span class="target-amount"> NGN'.$result['amount_raised'].'.00</span></span>'
+			.'<span class="red-text">&uarr;</span><span class="red-text smaller">'.$percent_raised.'%</span> </a> <span class="timeago smaller">'.$remaining.'</span></div>'
 			."</div>";
 	
 	
@@ -554,20 +590,67 @@ Your details (so we can thank you) <br><input type='text' name='email' value='' 
 }
 
 
+function activate_fundraiser($fundraiser_id='',$fundraiser_status=''){
+	$one_month = date('l jS F', strtotime('+4 weeks'));
+	$date =  date('c');
+ 	if(isset($_GET['fid'])){
+		$fundraiser_id=mysql_prep($_GET['fid']);
+		}
+		
+	if(isset($_POST['start_fundraiser'])){
+		$query = mysqli_query($GLOBALS["___mysqli_ston"], "UPDATE fundraiser SET status='active', end_date='{$one_month}', timeago_stamp='{$date}' WHERE id='{$fundraiser_id}'") 
+		or die("Failed to start contest " .((is_object($GLOBALS["___mysqli_ston"])) ? mysqli_error($GLOBALS["___mysqli_ston"]) : (($___mysqli_res = mysqli_connect_error()) ? $___mysqli_res : false)));
+		if($query){
+			session_message('Fundraiser_activated');
+			redirect_to($_SESSION['current_url']);
+			}
+		}
+		
+	if($fundraiser_status == '' && isset($_GET['fid'])){
+		$fundraiser_status = $_SESSION['status'];
+		}
+	
+	if(is_fundraiser_owner() && $fundraiser_status == 'pending'){
+		//~ echo 'here am i';
+		 echo "<span class='col-md-12 col-xs-12'><a href='".$_SESSION['current_url']."'>
+		 <form method='post' action='".$_SESSION['current_url']."'>
+		 <button name='start_fundraiser' class='btn btn-primary btn-md' onclick='this.form.submit();'>Activate Fundraiser</button></a>
+		 <br><em>Fundraiser will end exactly 30 days from activated date (today)</em>
+		 </form></span>";
+		}
+		
+		
+	}
+
+
+
 function show_fundraiser(){
 	
 	if(!empty($_GET['action']) && !empty($_GET['fid'])){
 		$fundraiser_id = mysql_prep($_GET['fid']);
 		$query = mysqli_query($GLOBALS["___mysqli_ston"], "SELECT * FROM `fundraiser` WHERE `id`='{$fundraiser_id}' LIMIT 1") 
-		or die('ERROR SELECTING FUNDRAISER '.mysql_query());
+		or die('ERROR SELECTING FUNDRAISER ');
 		
 		$result = mysqli_fetch_array($query);
+		
+		$time = strtotime($result['end_date']);
+		//echo $time;
+		
+		$remaining = time_elapsed($time);
+		if($remaining == '0 seconds' && $result['status'] != 'finished'){
+			$query = mysqli_query($GLOBALS["___mysqli_ston"],"Update fundraiser set status='finished' where id='{$fundraiser_id}' LIMIT 1") 
+			or die('Failed to update fundraiser status');
+			redirect_to($_SESSION['current_url']);
+			}
 		$name = $result['fundraiser_name'] .' fundraiser';
+		$percent_raised = $result['amount_raised']/$result['target_amount'] * 100;
 		
 		$_SESSION['fundraiser_name'] = $result['fundraiser_name'];
 		$_SESSION['fundraiser_id'] = $result['id'];
 		$_SESSION['status'] = $result['status'];
 		$_SESSION['author'] = $result['author'];
+		$_SESSION['end_date'] = $result['end_date'];
+		$_SESSION['time_remaining'] = '<time class="timeago" datetime="'.$result['timeago_stamp'].'">'.$result['timeago_stamp'].'</time>';
 		
 		echo "<section class='main-content-region'>";
 		
@@ -626,12 +709,15 @@ function show_fundraiser(){
 			# Print goal bar
 			echo '<div class="fundraiser-goal-alone"><span class="target-text">Target:<span class="target-amount"> NGN'.number_format($result['target_amount']).'.00</span></span>
 			<progress align="center" value="'.$result['amount_raised'].'" min="0" max="'.$result['target_amount']. '"></progress>
-			<span class="target-text">Raised: <span class="target-amount"> NGN'.$result['amount_raised'].'.00</span></span>';
+			<span class="target-text">Raised: <span class="target-amount"> NGN'.$result['amount_raised'].'.00</span></span>
+			<span class="green-text">&uarr;</span><span class="red-text">'.$percent_raised.'%</span>';
 			echo "</div>";
 			
 			donate($reciever=$result['author'], $current_amount=$result['amount_raised']);
 			
 			}
+			
+			
 			if($_SESSION['status'] == 'pending'){
 			status_message('alert','this fundraiser is not yet active');	
 			}
@@ -639,11 +725,19 @@ function show_fundraiser(){
 			status_message('alert', 'This fundraiser has ended!');
 			}
 			
+			activate_fundraiser();
+				
+				
 	# Print content	
-			echo "<div class='page-content'><h2> Reason :</h2>". parse_text_for_output($result['reason']) ."".
-				"<h2>Duration :</h2>From <span class='start-date'>".$result['start_date']."</span> to <span class='end-date'>  ".$result['end_date']."</span>";
+			echo "<div class='page-content'><h2> Reason :</h2>". parse_text_for_output($result['reason']) ."";
+				if($_SESSION['status']  == 'active'){
+				"<h2>End Date:</h2> <span class='end-date'>  ".$result['end_date']."</span>".$_SESSION['time_remaining'];
+				echo '<span class="timeago">'.$remaining.'</span>';
+				}
 			echo  '<p class="padding-10 category"><strong class="">Category - <a href="'.BASE_PATH.'?section_name='.$result['category'].'&is_category=yes">'.$result['category'].'</a></strong></p>' .
 				"</div>";
+				
+
 			add_to_category();
 			if(addon_is_active('featured_content')){
 				show_feature_this_link();
@@ -664,12 +758,12 @@ function show_fundraiser(){
 			echo "<strong>Author : </strong><a href='".BASE_PATH.'user?user='.$result['author']."'>".$result['author']."</a></strong><br>";
 			echo $author['thumbnail'];
 			
-		echo "<h2>Target Amount :<hr><div class='fundraiser-status'> NGN ".number_format($result['target_amount']).".00</div></h2>".
-			"<h2>Fundraiser status :<hr></h2><div class='fundraiser-status'> ".$result['status']."</div>".
-			"<h2>Amount raised :<hr><div class='amount-raised-big'> NGN ".number_format($result['amount_raised']).".00</div></h2>";
+		echo "<h2>Target Amount<hr><div class='fundraiser-status'> NGN ".number_format($result['target_amount']).".00</div></h2>".
+			"<h2>Status<hr></h2><div class='fundraiser-status'> ".$result['status']."</div>".
+			"<h2>Amount raised<hr><div class='amount-raised-big'> NGN ".number_format($result['amount_raised']).".00</div></h2>";
 			
 			
-		echo "<h2>Perks: </h2><div class='perks'> </div>";
+		echo "<h2>Perks</h2><div class='perks'> </div>";
 		
 		#Show donors button
 		echo "<br><form method='post' action='./donors.php'>".

@@ -41,6 +41,14 @@ $(document).ready(function () {
 		mobileFirst: false
 		});
 		
+		
+	// Upload titles
+	$('#image_title').hide();
+	 $("#image_field").change(function (){
+       var fileName = $(this).val();
+       $("#image_title").show('slow');
+     });	
+		
 	// Slide out panels	
 	$('#toggle-sidebar').click(function(){
 		$('#sidebar').toggleClass('hidden');

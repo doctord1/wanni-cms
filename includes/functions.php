@@ -1519,6 +1519,32 @@ function convertYoutube($string='', $width='') {
 	return $output;
 }
 
+
+function time_elapsed($time) {
+    $elapsed_time = $time - time();
+
+    if ($elapsed_time < 1) {
+        return '0 seconds';
+    }
+
+    $a = array(12 * 30 * 24 * 60 * 60 => 'year',
+        30 * 24 * 60 * 60 => 'month',
+        24 * 60 * 60 => 'day',
+        60 * 60 => 'hour',
+        60 => 'min',
+        1 => 'sec'
+    );
+
+    foreach ($a as $secs => $text) {
+        $d = $elapsed_time / $secs;
+        if ($d >= 1) {
+            $r = round($d);
+            return " - " . $r . ' ' . $text . ($r > 1 ? 's' : '') . ' left';
+        }
+    }
+}
+
+
 function get_session(){
 echo "<script type='text/javascript'>
 	var SessionUser = '{$_SESSION['username']}';

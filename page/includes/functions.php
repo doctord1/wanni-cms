@@ -1080,9 +1080,10 @@ if(is_logged_in()){
 	<input type="hidden" name="page_name" value="'.$page_name.'">
 	<input type="hidden" name="MAX_FILE_SIZE" value="5000000" />
     <!-- Name of input element determines name in $_FILES array -->
-	<input type="file" size="500" name="image_field" value="" placeholder="choose picture">
+	<input id="image_field" type="file" size="500" name="image_field" value="" placeholder="choose picture">
+	<input id="image_title" type="text" size="500" name="image_title" value="" placeholder="Title / Caption">
 	<input type="hidden" name="page_type" value="discussion">
-	<textarea name="content" placeholder="start a discussion">'.$quicktag.'</textarea>
+	<textarea name="content" placeholder="Talk about this">'.$quicktag.'</textarea>
 	<input type="submit" name="submit_discussion" value="Say it">
 	</form>
 	
@@ -1268,6 +1269,7 @@ $editor = $_SESSION['username'];
 $back_url = $_POST['back_url'];
 $created = date('c');
 $last_updated = date('c');
+$image_title = trim(mysql_prep($_POST['image_title']));
 
 $start_date = trim(mysql_prep($_POST['start_date']));
 $end_date = trim(mysql_prep($_POST['end_date']));
@@ -1356,7 +1358,11 @@ if(isset($_GET['tid'])){
 	} 
 
 	if(isset($_FILES['image_field'])){
+		if(!empty($image_title)){
+			$parent = $image_title;
+	} else {
 	$parent = "pic".$name .date('d/m/Y') .time(); 
+	}
 	$move = move_uploaded_file($_FILES['image_field']['tmp_name'], $uploadfile);
     }
 	if($move ==1){
@@ -1413,6 +1419,9 @@ if(isset($_GET['tid'])){
 
 		$page_name1 = str_ireplace('+','-',substr($content,0,50) ."...");
 		$page_name = str_ireplace('#','',$page_name1);
+		if(!empty($image_field)){
+			$page_name = $image_field;
+			}
 		$insert_query = mysqli_query($GLOBALS["___mysqli_ston"], "INSERT INTO `page`(`id`, `section_name`, `category`, `page_name`, `parent_id`, `page_type`, `menu_type`, `position`, `visible`, `content`, `created`, `last_updated`, `author`, `editor`, `allow_comments`, `promote_on_homepage`, `destination`) 
 		VALUES ('0', '{$section_name}', '{$category}', '{$page_name}', '{$parent_id}', '{$page_type}', '{$menu_type}', '0', '{$visible}', '{$content}', '{$created}', '{$last_updated}', '{$author}', '{$editor}', '{$allow_comments}', '{$promote_on_homepage}', '{$destination_url1}')")
 		 or die ("Discussion insert failed!". ((is_object($GLOBALS["___mysqli_ston"])) ? mysqli_error($GLOBALS["___mysqli_ston"]) : (($___mysqli_res = mysqli_connect_error()) ? $___mysqli_res : false)));
