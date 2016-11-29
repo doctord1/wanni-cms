@@ -40,7 +40,7 @@ function add_draw(){
 	
 		
 	$q = mysqli_query($GLOBALS['___mysqli_ston'],"INSERT INTO `draws`(`id`, `category`, `duration`, `instructions`, `end_date`, `status`, `last_winner`) 
-	VALUES ('0','{$category}','{$duration}','{$instructions}','{$end_date}','closed','')") 
+	VALUES ('0','{$category}','{$duration}','{$instructions}','{$end_date}','active','')") 
 	or die('failed to add draw '. mysqli_error());
 	
 	if($q){
@@ -99,7 +99,7 @@ function select_draw_winner($draw_id,$category=''){
 	$participants = array();
 	if($time['hours'] >= '20' && $time['hours'] < '24'){
 		$q = mysqli_query($GLOBALS['___mysqli_ston'],"SELECT user_name FROM draw_participants WHERE draw_id='{$draw_id}'") 
-	or die('Could not get draw participant usernames '.mysqli_error($GLOBALS['___mysqli_ston']));
+		or die('Could not get draw participant usernames '.mysqli_error($GLOBALS['___mysqli_ston']));
 		$num = mysqli_num_rows($q);
 		if($num > 0){
 			if(!winner_exists_today($category,$today)){
@@ -124,6 +124,9 @@ function select_draw_winner($draw_id,$category=''){
 			transfer_funds($action='add',$amount=$due_to_winner,$giver='system',$reciever=$winner,$reason='90% of Draw winnings',$auto_switch='true');
 			echo '<div class="clear green-text pull-right"><h3> Winner!! > ';
 			
+			$q = mysqli_query($GLOBALS['___mysqli_ston'],"DELETE FROM draw_participants WHERE draw_id='{$draw_id}'") 
+			or die('Could refresh participants db '.mysqli_error($GLOBALS['___mysqli_ston']));
+		
 			
 			echo '<a href="'.BASE_PATH.'user/?user='.$winner.'">'.$winner.'</a></h3></div>';
 		}else { 
@@ -132,11 +135,15 @@ function select_draw_winner($draw_id,$category=''){
 		}
 	} 
 }
+
+	// clear tables for new day
+	
 }
 
 
 function enter_draw($draw_id,$category=''){
-	
+	$today = date('l jS F');
+	$time = getdate();
 	// check if is already participating
 	$user =$_SESSION['username'];
 	$q = mysqli_query($GLOBALS['___mysqli_ston'],"SELECT count(*) as entered FROM draw_participants WHERE draw_id='{$draw_id}' and user_name='{$user}'") 
@@ -147,20 +154,26 @@ function enter_draw($draw_id,$category=''){
 	
 	if(isset($_POST['enter_draw'])){
 		$user = mysql_prep($_SESSION['username']);
+		$query = mysqli_query($GLOBALS["___mysqli_ston"], "UPDATE draws SET status='active', end_date='{$today}'") 
+		or die("Problem updating draw " .((is_object($GLOBALS["___mysqli_ston"])) ? mysqli_error($GLOBALS["___mysqli_ston"]) : (($___mysqli_res = mysqli_connect_error()) ? $___mysqli_res : false)));
+		
+		
 		$query = mysqli_query($GLOBALS["___mysqli_ston"], "INSERT INTO `draw_participants`(`id`, `draw_id`, `user_name`) 
 		VALUES ('0','{$draw_id}','{$user}')") 
 		or die("Problem entering draw " .((is_object($GLOBALS["___mysqli_ston"])) ? mysqli_error($GLOBALS["___mysqli_ston"]) : (($___mysqli_res = mysqli_connect_error()) ? $___mysqli_res : false)));
 		if($query){
-			transfer_funds('subtract',$category,'system',$_SESSION['username'],"Entered {$category} draw");
+			transfer_funds('subtract',$category,'system',$user,"Entered {$category} draw");
 			session_message('You are now participating in N'.$category.' draw');
 			redirect_to($_SESSION['current_url']);
 			}
 		}
-	echo '<form method="post" action="'.$_SESSION['current_url'].'">'.
-	"<button name='enter_draw' class='btn btn-primary btn-md' onclick='this.form.submit();'>Enter draw</button>
-	<em>will cost you {$category} site funds</em>";
-		 
-	echo'</form>';
+	if($time['hours'] >= '1' && $time['hours'] < '20'){
+		echo '<form method="post" action="'.$_SESSION['current_url'].'">'.
+		"<button name='enter_draw' class='btn btn-primary btn-md' onclick='this.form.submit();'>Enter draw</button>
+		<em>will cost you {$category} site funds</em>";
+			 
+		echo'</form>';
+	}
 	}
 }
 
@@ -168,7 +181,7 @@ function enter_draw($draw_id,$category=''){
 function show_draws($status=''){
 	$today = date('l jS F');
 	if($status != ''){
-		$condition = " WHERE status='{$status}'";
+		$condition = " WHERE status='{$status}' and end_date='{$today}'";
 	}else {$condition = '';} 
 	
 	$q = mysqli_query($GLOBALS['___mysqli_ston'],"SELECT * FROM draws {$condition}") 
@@ -182,7 +195,7 @@ function show_draws($status=''){
 			$duration = 'Ends on '.$result['end_date'].' by 8.00pm';
 			}
 		echo $result['duration'].' : '.$duration.'<hr>
-		Instructions :'.$result['instructions'];
+		<strong>Instructions </strong>:'.parse_text_for_output($result['instructions']) .'<hr><br>';
 		
 		$funds = get_user_funds();
 		if($funds > $result['category']){
