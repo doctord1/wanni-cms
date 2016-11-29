@@ -8,10 +8,11 @@ ini_alter
 
 require_once('includes/functions.php');
 $page_path = 'http://'.$_SERVER['HTTP_HOST'] .$_SERVER['REQUEST_URI'];	
-$referer_string = $_SERVER['HTTP_REFERRER'];
+//~ $referer_string = $_SERVER['HTTP_REFERRER'];
 if((!is_logged_in() && $page_path == BASE_PATH) 
-|| (string_contains($referer_string,'facebook.com') 
-|| string_contains($referer_string,'addthis.com')) 
+|| (!is_logged_in() && string_contains($page_path,'?page_name=home'))
+//~ || (!string_contains($referer_string,'facebook.com') 
+//~ || !string_contains($referer_string,'addthis.com')) 
 && $_SESSION['free_view_count'] < 2){
 	$_SESSION['free_view_count']++;
 	redirect_to(BASE_PATH.'user/');
