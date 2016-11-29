@@ -614,7 +614,7 @@ function activate_fundraiser($fundraiser_id='',$fundraiser_status=''){
 		//~ echo 'here am i';
 		 echo "<span class='col-md-12 col-xs-12'><a href='".$_SESSION['current_url']."'>
 		 <form method='post' action='".$_SESSION['current_url']."'>
-		 <button name='start_fundraiser' class='btn btn-primary btn-md' onclick='this.form.submit();'>Activate Fundraiser</button></a>
+		 <button name='start_fundraiser' class='btn btn-primary btn-md' onclick='this.form.submit();'>Activate Fundraiser</button>
 		 <br><em>Fundraiser will end exactly 30 days from activated date (today)</em>
 		 </form></span>";
 		}

@@ -181,7 +181,7 @@ function record_payment_transaction(){
 }
 	
 
-function transfer_funds($action='',$amount='',$giver='',$reciever='',$reason=''){
+function transfer_funds($action,$amount,$giver,$reciever,$reason,$auto_switch='false',$add_to_system=''){
 	
 	if(isset($_SESSION['username'])){
 	
@@ -191,13 +191,12 @@ if(isset($_POST['amount'])){
 $amount = trim(mysql_prep($_POST['amount']));
 }
 
-
-
 if($reciever == '' && isset($_POST['reciever'])){
 $reciever = trim(mysql_prep($_POST['reciever']));
 } else if(isset($_POST['account_to_top_up'])){
 $reciever = trim(mysql_prep($_POST['account_to_top_up']));
-} else {$reciever = $_SESSION['username'];}
+} else if(!isset($reciever)){
+	$reciever = $_SESSION['username'];}
 
 
 if($giver===''){
@@ -248,7 +247,7 @@ $new_giver_balance = $giver_balance - $amount;
 	
 		
 # do add funds 
-		if($_POST['action'] == 'donate' || $_POST['intent'] == 'support'){
+		if($_POST['action'] == 'donate' || $_POST['intent'] == 'support' || $auto_switch=='true'){
 		
 		# reciever
 		$fm_query = mysqli_query($GLOBALS["___mysqli_ston"], "INSERT INTO `funds_manager`(`id`, `giver`, `reciever`, `amount`, `time`, `reason`, `balance`) VALUES 
@@ -261,7 +260,10 @@ $new_giver_balance = $giver_balance - $amount;
 		or die("Could not update new Amount!") . ((is_object($GLOBALS["___mysqli_ston"])) ? mysqli_error($GLOBALS["___mysqli_ston"]) : (($___mysqli_res = mysqli_connect_error()) ? $___mysqli_res : false));
 		
 		if($update_reciever_amount){
-			status_message('alert','Your balance has been updated!');
+			$string = 'addons/draws';
+				if(!string_contains($_SESSION['current_url'], $string)){
+				status_message('alert','Your balance has been updated!');
+				}		
 			}
 		//echo 'New reciever balance is: '. $new_reciever_balance;
 		
@@ -365,7 +367,10 @@ $new_giver_balance = $giver_balance - $amount;
 			}
 			
 			# SHOW LINK TO RETURN TO ADD FUNDS PAGE
+			$string = 'addons/draws';
+			if(!string_contains($_SESSION['current_url'], $string)){
 			go_back();
+			}
 			
 			
 			}

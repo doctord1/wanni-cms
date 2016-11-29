@@ -426,7 +426,7 @@ function show_user_pic($user='',$pic_class='',$length=''){
 $query = mysqli_query($GLOBALS["___mysqli_ston"], "SELECT `picture`, `picture_thumbnail` FROM `user` WHERE `user_name`='{$user}'")
 or die("Unable to Select user pic!" . ((is_object($GLOBALS["___mysqli_ston"])) ? mysqli_error($GLOBALS["___mysqli_ston"]) : (($___mysqli_res = mysqli_connect_error()) ? $___mysqli_res : false)));
 
-$result=mysqli_fetch_array($query);
+$result = mysqli_fetch_array($query);
 $time = time();
 $pic_small = default_pic_fallback($pic=$result['picture_thumbnail'], $size='small');
 $pic_medium =  default_pic_fallback($pic=$result['picture'], $size='medium');
