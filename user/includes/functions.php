@@ -814,10 +814,12 @@ function login_register_switcher(){
 	}
 }
 
+
+
 function default_pic_fallback($pic,$size=''){
 	
 	if(empty($pic) && $size ===''){
-		$picture = BASE_PATH.'uploads/files/default_images/default-pic.png';
+		$picture = BASE_PATH.'uploads/files/default_images/default-pic-small.png';
 		return $picture;
 	} else if(empty($pic) && $size === 'small'){
 		$picture = BASE_PATH.'uploads/files/default_images/default-pic-small.png';

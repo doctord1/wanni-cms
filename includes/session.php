@@ -3,7 +3,8 @@ include_once(BASE_PATH.'details.php');
 session_start(); 
 $_SESSION['free_view_count'] = 0;
 $_SESSION['SITE_VERSION'] = SITE_VERSION;
-
+$_SESSION['banner'] = '<p align="center"><img class="img img-responsive" src="'.BASE_PATH.'uploads/files/default_images/Genai_logo2w500.jpg"></p>';
+	
 if (isset($_SESSION['LAST_ACTIVITY']) && (time() - $_SESSION['LAST_ACTIVITY'] > 1800)) {
     // last request was more than 30 minutes ago
     session_unset();     // unset $_SESSION variable for the run-time 

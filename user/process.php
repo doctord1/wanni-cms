@@ -94,7 +94,6 @@ while($login_result = mysqli_fetch_array($login_query)){
 	$_SESSION['picture'] = '<a href="'.BASE_PATH .'user/?user='.$login_result['user_name'] .'">'.
 	'<img src="'.$login_result['picture'].'"></a>';
 	$_SESSION['picture_thumbnail'] = '<a href="'.BASE_PATH .'user/?user='.$login_result['user_name'] .'">'.
-	'<img src="'.$login_result['picture_thumbnail'].'"></a>';
 	$_SESSION['secret_question'] = $login_result['secret_question'];
 	$_SESSION['secret_answer'] = $login_result['secret_answer'];
 	unset($_SESSION['not_logged_in']);

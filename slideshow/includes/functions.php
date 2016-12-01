@@ -45,6 +45,8 @@ function show_slideshow_block($images='',$width='',$height=''){
 		} else {
 				global $r;
 				$dir= $r.'slideshow/images/';
+				$dir = str_ireplace('regions/','',$dir);
+				//echo $dir;
 				$images = scandir($dir);
 			
 		echo '<div class="slider-wrapper theme-default">
@@ -52,7 +54,7 @@ function show_slideshow_block($images='',$width='',$height=''){
     
     foreach ($images as $image){  
 		if($image !== '.' && $image !== '..' && is_file($dir.$image)){  
-		echo '<img src="'.BASE_PATH.'slideshow/images/'.$image.'" data-thumb="images/slide1.png" alt="" width="100%" height="450px"/>';
+		echo '<img src="'.BASE_PATH.'slideshow/images/'.$image.'" data-thumb="'.$image.'" alt="" width="100%" height="450px"/>';
 		}
 	}
 

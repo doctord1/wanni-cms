@@ -46,6 +46,7 @@ function add_draw(){
 	if($q){
 		session_message('success','Draw saved!');
 		unset($_POST['submit']);
+		redirect_to($_SESSION['current_url']);
 		}
 	}
 	
@@ -77,10 +78,10 @@ function delete_draw($id){
 }
 
 function winner_exists_today($category,$date){
-	$q = mysqli_query($GLOBALS['___mysqli_ston'],"SELECT user_name FROM draw_winners WHERE date='{$date}'") 
+	$q = mysqli_query($GLOBALS['___mysqli_ston'],"SELECT user_name FROM draw_winners WHERE category='{$category}' and date='{$date}'") 
 	or die('Could not check if winner exists '.mysqli_error($GLOBALS['___mysqli_ston']));
 	$num = mysqli_num_rows($q);
-	//echo $num;
+	echo $num;
 	if($num < 1){
 		return false;
 		} 
@@ -88,8 +89,8 @@ function winner_exists_today($category,$date){
 		$result = mysqli_fetch_array($q);
 		$winner ='<a href="'.BASE_PATH.'user/?user='.$result['user_name'].'">'.$result['user_name'].'</a>';	
 		return $winner;
-			}
-	}
+		}
+}
 
 
 function select_draw_winner($draw_id,$category=''){
@@ -97,16 +98,15 @@ function select_draw_winner($draw_id,$category=''){
 	$today = date('l jS F');
 	//print_r($time);
 	$participants = array();
+	$stats = get_draw_statistics($draw_id,$category);
+	
+	if($stats['participants'] >= 1){
+			//~ echo $stats['participants'];
 	if($time['hours'] >= '20' && $time['hours'] < '24'){
-		$q = mysqli_query($GLOBALS['___mysqli_ston'],"SELECT user_name FROM draw_participants WHERE draw_id='{$draw_id}'") 
-		or die('Could not get draw participant usernames '.mysqli_error($GLOBALS['___mysqli_ston']));
-		$num = mysqli_num_rows($q);
-		if($num > 0){
-			if(!winner_exists_today($category,$today)){
-			
+		
+			if(false == winner_exists_today($category,$today)){
 			while($result = mysqli_fetch_array($q)){
 			$participants[] = $result['user_name'];
-			}
 			
 			$num_participants = count($participants) - 1;
 			$selected = mt_rand(0,$num_participants);
@@ -124,19 +124,29 @@ function select_draw_winner($draw_id,$category=''){
 			transfer_funds($action='add',$amount=$due_to_winner,$giver='system',$reciever=$winner,$reason='90% of Draw winnings',$auto_switch='true');
 			echo '<div class="clear green-text pull-right"><h3> Winner!! > ';
 			
-			$q = mysqli_query($GLOBALS['___mysqli_ston'],"DELETE FROM draw_participants WHERE draw_id='{$draw_id}'") 
-			or die('Could refresh participants db '.mysqli_error($GLOBALS['___mysqli_ston']));
-		
+			//~ $q = mysqli_query($GLOBALS['___mysqli_ston'],"DELETE FROM draw_participants WHERE draw_id='{$draw_id}'") 
+			//~ or die('Could refresh participants db '.mysqli_error($GLOBALS['___mysqli_ston']));
+		//~ 
 			
 			echo '<a href="'.BASE_PATH.'user/?user='.$winner.'">'.$winner.'</a></h3></div>';
+			}
+		
+		
+		// clear tables for new day
+		$q = mysqli_query($GLOBALS['___mysqli_ston'],"DELETE FROM draw_participants WHERE draw_id='{$draw_id}'") 
+			or die('Could refresh participants db '.mysqli_error($GLOBALS['___mysqli_ston']));
+		
+		
 		}else { 
 		$winner = winner_exists_today($category,$today);
+		
 		echo '<div class="clear green-text pull-right"><h3> Winner!! '. $winner.'</h3></div>';
 		}
 	} 
+	
+	
 }
 
-	// clear tables for new day
 	
 }
 
@@ -144,67 +154,94 @@ function select_draw_winner($draw_id,$category=''){
 function enter_draw($draw_id,$category=''){
 	$today = date('l jS F');
 	$time = getdate();
-	// check if is already participating
-	$user =$_SESSION['username'];
-	$q = mysqli_query($GLOBALS['___mysqli_ston'],"SELECT count(*) as entered FROM draw_participants WHERE draw_id='{$draw_id}' and user_name='{$user}'") 
-	or die("Error checking participant status ".mysqli_error($GLOBALS['___mysqli_ston']));
-	
-	$result = mysqli_fetch_array($q);
-	if($result['entered'] < 1){
-	
 	if(isset($_POST['enter_draw'])){
-		$user = mysql_prep($_SESSION['username']);
+	$draw_id = mysql_prep($_POST['draw_id']);
+	$category = mysql_prep($_POST['category']);
+	$user =$_SESSION['username'];
+	
+	//checkif draw is active
+	$q = mysqli_query($GLOBALS['___mysqli_ston'],"SELECT status FROM draws WHERE id='{$draw_id}' ") 
+	or die("Error checking participant status ".mysqli_error($GLOBALS['___mysqli_ston']));
+	if($result['status'] == 'closed'){
 		$query = mysqli_query($GLOBALS["___mysqli_ston"], "UPDATE draws SET status='active', end_date='{$today}'") 
 		or die("Problem updating draw " .((is_object($GLOBALS["___mysqli_ston"])) ? mysqli_error($GLOBALS["___mysqli_ston"]) : (($___mysqli_res = mysqli_connect_error()) ? $___mysqli_res : false)));
-		
-		
+	}
+	// echo 'draw id is'.$draw_id;
+	// check if user is already participating
+	
+	if(!is_draw_participant($draw_id)){
 		$query = mysqli_query($GLOBALS["___mysqli_ston"], "INSERT INTO `draw_participants`(`id`, `draw_id`, `user_name`) 
 		VALUES ('0','{$draw_id}','{$user}')") 
 		or die("Problem entering draw " .((is_object($GLOBALS["___mysqli_ston"])) ? mysqli_error($GLOBALS["___mysqli_ston"]) : (($___mysqli_res = mysqli_connect_error()) ? $___mysqli_res : false)));
-		if($query){
-			transfer_funds('subtract',$category,'system',$user,"Entered {$category} draw");
-			session_message('You are now participating in N'.$category.' draw');
-			redirect_to($_SESSION['current_url']);
-			}
+		
 		}
-	if($time['hours'] >= '1' && $time['hours'] < '20'){
+	if($query){
+		transfer_funds('subtract',"{$category}",'system',"{$user}","Entered N{$category} draw",$auto_switch='true');
+		session_message('alert','You are now participating in N'.$category.' draw');
+		redirect_to($_SESSION['current_url']);
+		}
+		}
+		
+	if($time['hours'] < '20' && !is_draw_participant($draw_id)){
 		echo '<form method="post" action="'.$_SESSION['current_url'].'">'.
-		"<button name='enter_draw' class='btn btn-primary btn-md' onclick='this.form.submit();'>Enter draw</button>
+		"<input type='hidden' name='draw_id' value='{$draw_id}'>
+		<input type='hidden' name='category' value='{$category}'>
+		<button name='enter_draw' class='btn btn-primary btn-md' onclick='this.form.submit();'>Enter draw</button>
 		<em>will cost you {$category} site funds</em>";
 			 
 		echo'</form>';
 	}
-	}
+	
 }
+
+
+function is_draw_participant($draw_id){
+	$user = $_SESSION['username'];
+	
+	// check if user is already participating
+	$q = mysqli_query($GLOBALS['___mysqli_ston'],"SELECT count(*) as entered FROM draw_participants WHERE draw_id='{$draw_id}' and user_name='{$user}'") 
+	or die('Could not tell if you are participating '.mysqli_error($GLOBALS['___mysqli_ston']));
+	
+	$result = mysqli_fetch_array($q);
+	if($result['entered'] > 0){
+		return true;
+		} else {
+			return false;
+			}
+	}
 
 
 function show_draws($status=''){
 	$today = date('l jS F');
+	$time = getdate();
+	
 	if($status != ''){
-		$condition = " WHERE status='{$status}' and end_date='{$today}'";
+		$condition = " WHERE status='{$status}'";
 	}else {$condition = '';} 
 	
 	$q = mysqli_query($GLOBALS['___mysqli_ston'],"SELECT * FROM draws {$condition}") 
 	or die('Error fetching draws'.mysqli_error($GLOBALS['___mysqli_ston']));
 	while($result = mysqli_fetch_array($q)){
 		
-		echo '<div class="col-md-10 col-xs-10 padding-20 margin-20 whitesmoke"> <span class="pull-right">'.$today.'</span> Category : <strong>'.$result['category'].'</strong><hr>';
+		echo '<div class="col-md-10 col-xs-10 padding-20 margin-20 whitesmoke"> <span class="pull-right">'.$today
+		.' | '.($time['hours'] ).':'.$time['minutes'].'</span>
+		<br> Category : <strong>N'.$result['category'].'</strong><hr>';
 		if($result['duration'] == 'Daily'){
-			$duration = 'Ends tonight at 8.00pm';
+			$duration = 'Ends every day at 20.00 server time ';
 		}elseif($result['duration'] == 'Weekly'){
 			$duration = 'Ends on '.$result['end_date'].' by 8.00pm';
 			}
-		echo $result['duration'].' : '.$duration.'<hr>
+		echo ''.$duration.'<hr>
 		<strong>Instructions </strong>:'.parse_text_for_output($result['instructions']) .'<hr><br>';
 		
 		$funds = get_user_funds();
-		if($funds > $result['category']){
+		if($funds >= $result['category']){
 			enter_draw($result['id'],$result['category']);
 			}
 		$stats = get_draw_statistics($result['id'],$result['category']);
 		echo '<span class="pull-right">
-		<em>'.$stats['participants'].' participants</em>
-		<span class="red-text">Money pot :</span><span class="green-text">
+		<em>'.$stats['message'].'</em>
+		<br><span class="red-text">Money pot :</span><span class="green-text">
 		<strong>N'.$stats['money_pot'].' </strong></span>';
 		echo'</span>';
 		
@@ -212,19 +249,34 @@ function show_draws($status=''){
 		if($stats['participants'] < 1){
 		delete_draw($result['id']);
 		}
-		echo '</div>';
+		$share_buttons ='<div class="block">
+						<!-- Go to www.addthis.com/dashboard to customize your tools --> 
+						<div class="addthis_inline_share_toolbox"></div>
+						</div>';
+		echo $share_buttons.'</div>';
 		}
 	}
 
 
 function get_draw_statistics($draw_id,$category=''){
+	$user = $_SESSION['username'];
 	$stats = array();
+	
+	$stats['entered'] = is_draw_participant($draw_id);
+	//echo $stats['entered'];
+	
 	$q = mysqli_query($GLOBALS['___mysqli_ston'],"SELECT count(*) as participants FROM draw_participants WHERE draw_id='{$draw_id}'") 
 	or die('Could not get draw participants '.mysqli_error($GLOBALS['___mysqli_ston']));
 	
 	$result = mysqli_fetch_array($q);
-	$stats['participants'] = $result['participants'];
+	$stats['participants'] = $result['participants'] ;
+	if($stats['entered'] == true){
+	$stats['message'] = '<strong>Participating : </strong><span class="red-text">You</span> and '.($result['participants']-1). ' others';
+	} else {
+		$stats['message'] = '';
+		}
 	$stats['money_pot'] = $result['participants'] * $category;
+	//print_r($stats);
 	return $stats;
 	}
 

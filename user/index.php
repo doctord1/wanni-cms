@@ -43,7 +43,14 @@ start_page();
 <section class='container'>
 <?php include_once('../regions/includes/left_region.php'); ?>
 <!-- HIGHTLIGHT REGION -->
-<?php include_once('../regions/includes/highlight_region.php'); ?>
+<?php include_once('../regions/includes/highlight_region.php'); 
+if(! is_logged_in()){
+	
+			echo '<div class="row"><div class="col-md-12 col-xs-12 black margin-20 padding-10 large-text">';
+			echo $_SESSION['banner'];
+			echo '</div>
+			</div>';
+	}?>
 
 
 <div class='main-content-region text-center'>
@@ -54,6 +61,8 @@ start_page();
 
 echo $_SESSION['status_message'];
 $_SESSION['status_message'] = '';
+
+	
 login_register_switcher();
 forgot_password();
 if(isset($_GET['user'])){
@@ -182,6 +191,8 @@ echo '<div class="row">
 <div class="col-md-4 col-xs-12 padding-20 green-bar"> Help others achieve their goals, ideas or projects by completing small tasks for which you will be paid for.</div>
 <div class="col-md-12 col-xs-12 padding-20">Whichever one you choose, GeniusAid has got you covered!</div>
 </div>';
+
+
 }	
 ?>	
 

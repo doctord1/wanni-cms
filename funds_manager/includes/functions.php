@@ -261,7 +261,7 @@ $new_giver_balance = $giver_balance - $amount;
 		
 		if($update_reciever_amount){
 			$string = 'addons/draws';
-				if(!string_contains($_SESSION['current_url'], $string)){
+				if(!string_contains($_SESSION['current_url'], $string) || !string_contains($_SESSION['current_url'], 'page_name=home')){
 				status_message('alert','Your balance has been updated!');
 				}		
 			}
@@ -368,7 +368,7 @@ $new_giver_balance = $giver_balance - $amount;
 			
 			# SHOW LINK TO RETURN TO ADD FUNDS PAGE
 			$string = 'addons/draws';
-			if(!string_contains($_SESSION['current_url'], $string)){
+			if(!string_contains($_SESSION['current_url'], $string) || !string_contains($_SESSION['current_url'], 'page_name=home')){
 			go_back();
 			}
 			
