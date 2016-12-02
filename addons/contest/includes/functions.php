@@ -658,7 +658,7 @@ function activate_contest($contest_id='',$contest_status=''){
 	if(is_admin() && $contest_status == 'inactive'){
 		 echo "<span class='pull-left padding-5 inline-block'><a href='".$_SESSION['current_url']."'>
 		 <form method='post' action='".$_SESSION['current_url']."'>
-		 <button name='start_contest' class='btn btn-primary btn-xs' onclick='this.form.submit();'>Start</button></a></span>
+		 <input type='submit' name='start_contest' class='btn btn-primary btn-xs' value='Start'>
 		 </form>";
 		}
 	}

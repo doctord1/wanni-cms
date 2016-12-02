@@ -158,8 +158,10 @@ function load_top_up_pin(){
 	$pin = mysql_prep($_POST['top_up_pin']);
 	$query = mysqli_query($GLOBALS["___mysqli_ston"], "SELECT * FROM `top_up_pin` WHERE `top_up_pin`='{$pin}' AND `status`='unused'") 
 	or die("Pin selection failed " . ((is_object($GLOBALS["___mysqli_ston"])) ? mysqli_error($GLOBALS["___mysqli_ston"]) : (($___mysqli_res = mysqli_connect_error()) ? $___mysqli_res : false)));
+	$num = mysqli_num_rows($query);
+	echo $num;
 	
-	if(mysqli_num_rows($query)===1){
+	if(mysqli_num_rows($query)===1){echo 'I dey here';
 		$result = mysqli_fetch_array($query);
 		$date = date('d-M-Y');
 		

@@ -182,7 +182,7 @@ function record_payment_transaction(){
 	
 
 function transfer_funds($action,$amount,$giver,$reciever,$reason,$auto_switch='false',$add_to_system=''){
-	
+	echo "I caught it";
 	if(isset($_SESSION['username'])){
 	
 #Get POST variables
@@ -311,7 +311,7 @@ $new_giver_balance = $giver_balance - $amount;
 		
 //Load top up pin
 		if($_POST['action'] == 'load_top_up' || isset($_POST['transaction_id'])){		
-		
+		print_r($_POST);
 		$giver = 'system';
 		//$amount= mysql_prep($_POST['pin_value']);
 		$check_initial_deposit_query = mysqli_query($GLOBALS["___mysqli_ston"], "SELECT `amount` FROM funds_manager WHERE reciever='{$reciever}' AND `reason`='initial deposit'") 

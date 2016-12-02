@@ -420,8 +420,16 @@ function get_page_types(){ //deprecated
 
 function add_child_page(){
 	if($_SESSION['page_type'] =='page' || $_SESSION['page_type'] =='discussion' && is_author()){
-	echo "<div class='padding-10 clear whitesmoke pull-right'><a href='".BASE_PATH.'page/add/?type=page&parent_id='.$_SESSION['page_id'].'&section_name='
-	.$_SESSION['section_name'].'&category='.$_SESSION['category']."'>Add child page</a></div>";
+	echo "<div id='add-child' class='padding-10 clear whitesmoke pull-right block'>";
+	//~ <a  href='".BASE_PATH.'page/add/?type=page&parent_id='.$_SESSION['page_id'].'&section_name='
+	//~ .$_SESSION['section_name'].'&category='.$_SESSION['category']."'>
+	echo "Add child page";
+	//~ </a>
+	echo "</div>";
+	
+	echo '<div id="start-discussion" class="block margin-10 pull-left"> <h3>Add child page</h3>';
+	start_a_discussion();
+	echo '</div><br><hr>';
 	}
 } 
 
@@ -467,13 +475,15 @@ function list_child_pages(){
 	$query = mysqli_query($GLOBALS["___mysqli_ston"], "SELECT `id`,`page_name` FROM page WHERE parent_id='{$id}'") or die(((is_object($GLOBALS["___mysqli_ston"])) ? mysqli_error($GLOBALS["___mysqli_ston"]) : (($___mysqli_res = mysqli_connect_error()) ? $___mysqli_res : false)));
 	$num = mysqli_num_rows($query);
 	if(!empty($num)){
-		echo '<strong class="padding-10 inline-block">Child pages</strong><br>';
+		echo '<div class="block">
+		<strong class="padding-10 inline-block">Child pages</strong><br>';
 		while($result = mysqli_fetch_array($query)){	
 			//if($result['parent_id']){	
 			$next_id = $result['id'] + 1;
-			echo '<li><a href="'.BASE_PATH.'?page_name='.$result['page_name'].'&tid='.$result['id'].'&next='.$next_id.'">'.ucfirst(str_ireplace('-',' ',$result['page_name'])).'</a></li>';
+			echo '<li><a href="'.BASE_PATH.'?page_name='.$result['page_name'].'&tid='.$result['id'].'&next='.$next_id.'">'.ucfirst(str_ireplace('-',' ',urldecode($result['page_name']))).'</a></li>';
 			//}
 			}
+			echo '</div>';
 		}
 	}
 }
@@ -921,7 +931,7 @@ function get_page_content($page='home') {
 						$content = parse_text_for_output($content);
 						}
 					echo $content;
-					echo $share_buttons;
+					echo '<p></p>'.$share_buttons;
 					
 					
 						
@@ -944,7 +954,7 @@ function get_page_content($page='home') {
 					show_linked_attachments();		
 						
 					//Show child pages
-						echo '<div align="right" class="padding-10">';
+						echo '<div align="right" class="">';
 							if(!is_child_page()){
 							add_child_page(); 
 							} // else {  echo '<em>Is a chid page</em>'; }
@@ -1071,11 +1081,15 @@ if(is_logged_in()){
 	$quicktag = '#'.$_GET['hashtag'];
 	$category = '#'.trim(mysql_prep($_GET['hashtag']));
 	}
+	if(isset($_GET['tid'])){
+		$parent_id = mysql_prep($_GET['tid']);
+		}
 	
 	process_post_submission();
 	$page_name= trim(mysql_prep($_GET['page_name']));
 	$form = '<form class="gainsboro padding-10" action="'.$_SERVER['current_url'].'" method="post" enctype="multipart/form-data">
 	<input type="hidden" name="action" value="insert">
+	<input type="hidden"  name="parent_id" value="'.$parent_id.'">
 	<input type="hidden" name="category" value="'.$category.'">
 	<input type="hidden" name="page_name" value="'.$page_name.'">
 	<input type="hidden" name="MAX_FILE_SIZE" value="5000000" />
@@ -1134,13 +1148,13 @@ function get_discussion_content(){
 		$category = trim(mysql_prep($_GET['section_name']));
 		
 		if($category){
-		$query = mysqli_query($GLOBALS["___mysqli_ston"], "SELECT * FROM `page` WHERE WHERE page_type='discussion' AND `category`='{$category}' AND `page_name`!='home' ORDER BY `id` DESC {$limit}")
+		$query = mysqli_query($GLOBALS["___mysqli_ston"], "SELECT * FROM `page` WHERE WHERE page_type='discussion' AND `category`='{$category}' AND `page_name`!='home' GROUP by page_name ORDER BY `id` DESC {$limit}")
 		or die ("Failed to get category content ". ((is_object($GLOBALS["___mysqli_ston"])) ? mysqli_error($GLOBALS["___mysqli_ston"]) : (($___mysqli_res = mysqli_connect_error()) ? $___mysqli_res : false)));
 		} else if(url_contains('page_name=home') || url_contains('page_name=talk')){
-		$query = mysqli_query($GLOBALS["___mysqli_ston"], "SELECT * FROM `page` WHERE page_type='discussion' ORDER BY `id` DESC {$limit}")
+		$query = mysqli_query($GLOBALS["___mysqli_ston"], "SELECT * FROM `page` WHERE page_type='discussion' GROUP by page_name ORDER BY `id` DESC {$limit}")
 		or die ("Failed to get discussions ". ((is_object($GLOBALS["___mysqli_ston"])) ? mysqli_error($GLOBALS["___mysqli_ston"]) : (($___mysqli_res = mysqli_connect_error()) ? $___mysqli_res : false)));
 		} else {
-		$query = mysqli_query($GLOBALS["___mysqli_ston"], "SELECT * FROM `page` ORDER BY `id` DESC {$limit}")
+		$query = mysqli_query($GLOBALS["___mysqli_ston"], "SELECT * FROM `page` GROUP by page_name ORDER BY `id` DESC {$limit}")
 		or die ("Failed to get discussions ". ((is_object($GLOBALS["___mysqli_ston"])) ? mysqli_error($GLOBALS["___mysqli_ston"]) : (($___mysqli_res = mysqli_connect_error()) ? $___mysqli_res : false)));
 		}
 		echo '<section class=""><table class="table"><tbody>';
@@ -1172,34 +1186,39 @@ function get_discussion_content(){
 			$page = mysql_prep($result['page_name']);
 			$pics = get_linked_image($subject_id = $result['id'],$pic_size='half',$limit='4');
 			
-			$title = "<a href='" .BASE_PATH ."?page_name=" .$result['page_name'] ."&tid=".$result['id']."'>".'&nbsp;&raquo;Continue reading'.'</a>';
+			$title_link = "<br><a href='" .BASE_PATH ."?page_name=" .$result['page_name'] ."&tid=".$result['id']."'>".'read more &raquo</a>';
 			
 				$output=  "<tr><td class='gainsboro'>
 			{$user['thumbnail']}</td><td class='table-message-plain'>" ;
 			
 			$output .= "<div class='last-updated pull-right'> <time class='timeago' datetime='".$result['last_updated'] ."'>".$result['last_updated'] ."</time></div>";
-			
+			if(!empty($result['content'])){
 			$content = str_ireplace('{show_images_in_lists}','',substr(urldecode($result['content']),0,350));
+			
+			$content2 = parse_text_for_output($content);
+			if(string_contains($content2,'youtube.com/embed') 
+			|| string_contains($content2,'youtu.be/') 
+			|| string_contains($content2,'youtube.com/watch?') 
+			|| string_contains($content2,'vimeo.com/')
+			){
+				$content2 .= " <span class='badge padding-10'>video</span>";
+				}
+			} else {
+				$content = '...';
+				$content2 ='...';
+				}
 			$output2 = "<a href='" .BASE_PATH ."?page_name=" .$result['page_name'] ."&tid=".$result['id']."'>";
 		$output2 .= "";
 		$comments_num = get_num_comments($result['id']);
 		$output2 .= $comments_num ."</a>" ;
 		
 		
-		$content2 = parse_text_for_output($content);
-		if(string_contains($content2,'youtube.com/embed') 
-		|| string_contains($content2,'youtu.be/') 
-		|| string_contains($content2,'youtube.com/watch?') 
-		|| string_contains($content2,'vimeo.com/')
-	){
-		$content2 .= " <span class='badge padding-10'>video</span>";
-		}
-		if($content2){
+		if(!empty($content2)){
 			echo  $output ."<a href='" .BASE_PATH ."?page_name=" .$result['page_name'] ."&tid=".$result['id']."'>";
 			foreach($pics as $pic){
 				echo $pic;
 				}
-			echo "</a>".'<br>'.$content2 .'<br>' .$output2 . $title ;
+			echo "</a>".'<br>'.$content2 .'<br>' .$output2 .$title_link ;
 		}
 		echo " </td></tr>" ;
 		} // if is hashtag participant

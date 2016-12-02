@@ -124,7 +124,7 @@ function get_hashtag_posts(){
 	$show_more_pager = pagerize($start='',$show_more='15');
 	$limit = $_SESSION['pager_limit'];
 	
-	$query = mysqli_query($GLOBALS["___mysqli_ston"], "SELECT DISTINCT * FROM hashtagged_posts WHERE hashtag='{$hashtag}' ORDER BY id DESC {$limit}") 
+	$query = mysqli_query($GLOBALS["___mysqli_ston"], "SELECT DISTINCT * FROM hashtagged_posts WHERE hashtag='{$hashtag}' GROUP BY parent_id ORDER BY id DESC {$limit}") 
 	or die('There was a problem fetching hashtag posts ' .((is_object($GLOBALS["___mysqli_ston"])) ? mysqli_error($GLOBALS["___mysqli_ston"]) : (($___mysqli_res = mysqli_connect_error()) ? $___mysqli_res : false)));
 	
 	$num = mysqli_num_rows($query);
@@ -143,9 +143,10 @@ function get_hashtag_posts(){
 	
 	while($result = mysqli_fetch_array($query)){
 		$id = $result['parent_id'];
+		$in_view = array();
 		$query2 = mysqli_query($GLOBALS["___mysqli_ston"], "SELECT * FROM page where id={$id}");
 		$result2 = mysqli_fetch_array($query2);
-			
+			if(!in_array($in_view))
 			//$output = '<a href="'.$result2['destination'].'">'.str_ireplace('-',' ',ucfirst(urldecode($sel_page['page_name']))) .'</a><br>';
 			
 			$pic = show_user_pic($user=$result2['author'] ,$pic_class='img-rounded');
@@ -174,13 +175,15 @@ function get_hashtag_posts(){
 		
 		
 	}echo '</tbody></table></section>';
-		if(!empty($num)){ echo $show_more_pager; }
+		echo $show_more_pager; 
 	}
 	else {
 		status_message('alert',"This is a private Hashtag Group and you do not have access to it. 
 		If you are interested in JOINING, you may contact <a class='green-text' href='".BASE_PATH."user?user={$_SESSION['hashtag_creator']}'> {$_SESSION['hashtag_creator']} </a> to add you.");
 		}
-	}
+	} else {
+		get_discussion_content();
+		}
 
 }
 	
@@ -228,7 +231,7 @@ function add_hashtag($hashtag="",$path='',$show_form='no',$post_type=""){
 		$parent_id = $id;	
 		} else { $parent_id = $result['id']; }
 		
-		$query = mysqli_query($GLOBALS["___mysqli_ston"], "INSERT INTO `hashtagged_posts`(`id`, `hashtag`, `path`, `parent_id` ,`post_type`, `creator`) 
+		$query = mysqli_query($GLOBALS["___mysqli_ston"], "INSERT IGNORE INTO `hashtagged_posts`(`id`, `hashtag`, `path`, `parent_id` ,`post_type`, `creator`) 
 		VALUES ('0','{$hashtag}','{$path}','{$parent_id}','{$post_type}','{$creator}')") 
 		or die('Error inserting hashtag ' . ((is_object($GLOBALS["___mysqli_ston"])) ? mysqli_error($GLOBALS["___mysqli_ston"]) : (($___mysqli_res = mysqli_connect_error()) ? $___mysqli_res : false)));
 			}
@@ -330,7 +333,7 @@ function administer_hashtag(){
 				or die("Error deleting ".((is_object($GLOBALS["___mysqli_ston"])) ? mysqli_error($GLOBALS["___mysqli_ston"]) : (($___mysqli_res = mysqli_connect_error()) ? $___mysqli_res : false)));
 				if($query){
 					session_message('alert','#'.$hashtag .' deleted !');
-					redirect_to(BASE_PATH.'?page_name=talk');
+					redirect_to(ADDONS_PATH.'hashtags');
 					}
 				}
 		}

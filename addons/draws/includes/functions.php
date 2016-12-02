@@ -186,7 +186,7 @@ function enter_draw($draw_id,$category=''){
 		echo '<form method="post" action="'.$_SESSION['current_url'].'">'.
 		"<input type='hidden' name='draw_id' value='{$draw_id}'>
 		<input type='hidden' name='category' value='{$category}'>
-		<button name='enter_draw' class='btn btn-primary btn-md' onclick='this.form.submit();'>Enter draw</button>
+		<input type='submit' name='enter_draw' class='btn btn-primary btn-md' value='Enter draw'>
 		<em>will cost you {$category} site funds</em>";
 			 
 		echo'</form>';

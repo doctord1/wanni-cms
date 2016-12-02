@@ -3275,3 +3275,7 @@ height: 100%;
 position:relative;
 z-index: 500000;
 }
+
+#add-child{
+cursor: pointer;
+}

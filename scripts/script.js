@@ -71,6 +71,7 @@ $(document).ready(function () {
 			$('#sidebar').addClass('hidden');
 			$('body').removeClass('content-pushed');
 		}
+
 	});
 	
 
@@ -104,6 +105,7 @@ $(document).ready(function () {
 				}
 			$('.dropdown-menu').css(position);
 		});	
+	
 	
 	if ($('.center').html() ==''){
 		$(".center").hide();
@@ -197,6 +199,9 @@ $(document).ready(function () {
 			$('.interswitch-pay').hide('slow');
 	});
 		
+		
+	
+	
 	//push tamer
 	$('.pushcrew-modal-branding').hide();
 	
@@ -207,6 +212,10 @@ $(document).ready(function () {
 		}
 	blink();
 	
+	$('#start-discussion').hide();
+	$('#add-child').click(function(){
+		$('#start-discussion').slideToggle('slow');
+		});
 	
 	jQuery(".timeago").timeago();	
 	
