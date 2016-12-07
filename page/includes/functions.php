@@ -429,7 +429,7 @@ function add_child_page(){
 	
 	echo '<div id="start-discussion" class="block margin-10 pull-left"> <h3>Add child page</h3>';
 	start_a_discussion();
-	echo '</div><br><hr>';
+	echo '</div><br>';
 	}
 } 
 
@@ -488,6 +488,31 @@ function list_child_pages(){
 	}
 }
 	
+function disqus(){
+	echo '<div id="disqus_thread"></div>
+<script>';
+echo "
+/**
+*  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+*  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
+/*
+var disqus_config = function () {
+this.page.url = {$_SESSION['current_url']};  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = {$_GET['tid']}; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+*/
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = '//geniusaid-org.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script>";
+
+echo '<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>';
+                                
+	}
+
 function add_comment($subject = '',$reply='',$placeholder='',$button_text='',$upload_allowed=''){
 remove_file();
 if($subject == ''){
@@ -931,7 +956,7 @@ function get_page_content($page='home') {
 						$content = parse_text_for_output($content);
 						}
 					echo $content;
-					echo '<p></p>'.$share_buttons;
+					echo '<p><br></p>'.$share_buttons;
 					
 					
 						
@@ -1012,7 +1037,7 @@ function get_page_content($page='home') {
 				
 				
 			  if($result['allow_comments'] === 'yes'){
-				add_comment();
+				disqus();
 			echo '</div>';	
 				if(!is_logged_in()){
 				 log_in_to_comment(); 
@@ -1044,7 +1069,11 @@ function get_author_picture(){
 	
 	
 function my_authored_posts(){
+if(is_user_page()){
+	$user = mysql_prep($_GET['user']);
+	} else {
 $user = $_SESSION['username'];
+}
 $get_post_type = trim(mysql_prep($_GET['post_type']));
 $show_more_pager = pagerize();
 

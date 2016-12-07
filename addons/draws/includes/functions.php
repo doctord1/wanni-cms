@@ -81,7 +81,7 @@ function winner_exists_today($category,$date){
 	$q = mysqli_query($GLOBALS['___mysqli_ston'],"SELECT user_name FROM draw_winners WHERE category='{$category}' and date='{$date}'") 
 	or die('Could not check if winner exists '.mysqli_error($GLOBALS['___mysqli_ston']));
 	$num = mysqli_num_rows($q);
-	echo $num;
+	//echo $num;
 	if($num < 1){
 		return false;
 		} 
@@ -100,20 +100,26 @@ function select_draw_winner($draw_id,$category=''){
 	$participants = array();
 	$stats = get_draw_statistics($draw_id,$category);
 	
-	if($stats['participants'] >= 1){
+	if($stats['participants'] >= 1 && ($time['hours'] >'20' && $time['hours'] < '24')){
 			//~ echo $stats['participants'];
-	if($time['hours'] >= '20' && $time['hours'] < '24'){
-		
-			if(false == winner_exists_today($category,$today)){
-			while($result = mysqli_fetch_array($q)){
-			$participants[] = $result['user_name'];
 			
+			if(!winner_exists_today($category,$today)){
+			$query = mysqli_query($GLOBALS['___mysqli_ston'],"SELECT user_name FROM draw_participants where draw_id='{$draw_id}'") 
+			or die("Problem selecting draw winners ".mysqli_error($GLOBALS['___mysqli_ston']));
+						
+			while($result = mysqli_fetch_array($query)){
+			$participants[] = $result['user_name'];
+	
+			}
 			$num_participants = count($participants) - 1;
+			// Select winner
 			$selected = mt_rand(0,$num_participants);
 			$winner = $participants[$selected];
-			//~ echo $winner;
+			echo $winner;
 			$amount_won = ($num_participants + 1) * $category;
 			$due_to_winner = $amount_won - ((1/10)*$amount_won);
+			
+			//die();
 			
 			//record winner
 			$q = mysqli_query($GLOBALS['___mysqli_ston'],"INSERT INTO `draw_winners`(`id`, `user_name`, `category`, `total_amount`, `date`) 
@@ -129,7 +135,8 @@ function select_draw_winner($draw_id,$category=''){
 		//~ 
 			
 			echo '<a href="'.BASE_PATH.'user/?user='.$winner.'">'.$winner.'</a></h3></div>';
-			}
+			
+			
 		
 		
 		// clear tables for new day
@@ -142,7 +149,7 @@ function select_draw_winner($draw_id,$category=''){
 		
 		echo '<div class="clear green-text pull-right"><h3> Winner!! '. $winner.'</h3></div>';
 		}
-	} 
+	
 	
 	
 }
@@ -214,25 +221,41 @@ function is_draw_participant($draw_id){
 function show_draws($status=''){
 	$today = date('l jS F');
 	$time = getdate();
+	$instructions = "<hr>Simply enter the draw, and wait till it ends.
+	At exactly 8.00pm every day, the system will randomly select 
+	a winner from the participants, and the Money in the Pot will be 
+	instantly transferred to the winner's account.(Minus ten percent). 
+	Everyone can participate but you can only enter once per draw. 
+	The more people that participate, the bigger the pot, 
+	the luckier the winner. Goodluck !";
+	
+	$q=$_SERVER['QUERY_STRING'];
+	if(empty($_SERVER['QUERY_STRING'])){
+		echo $instructions;
+		}
 	
 	if($status != ''){
 		$condition = " WHERE status='{$status}'";
 	}else {$condition = '';} 
 	
+	echo '<ol>';
 	$q = mysqli_query($GLOBALS['___mysqli_ston'],"SELECT * FROM draws {$condition}") 
 	or die('Error fetching draws'.mysqli_error($GLOBALS['___mysqli_ston']));
 	while($result = mysqli_fetch_array($q)){
 		
-		echo '<div class="col-md-10 col-xs-10 padding-20 margin-20 whitesmoke"> <span class="pull-right">'.$today
+		echo '<div class="col-md-10 col-xs-10 padding-20 margin-20 whitesmoke"><li> <span class="pull-right">'.$today
 		.' | '.($time['hours'] ).':'.$time['minutes'].'</span>
-		<br> Category : <strong>N'.$result['category'].'</strong><hr>';
+		
+		<br> Category : <strong>N'.$result['category'].'</strong>
+		
+		<a class="pull-right" href="'.ADDONS_PATH.'draws">Instructions</a><hr>';
+		
 		if($result['duration'] == 'Daily'){
 			$duration = 'Ends every day at 20.00 server time ';
 		}elseif($result['duration'] == 'Weekly'){
 			$duration = 'Ends on '.$result['end_date'].' by 8.00pm';
 			}
-		echo ''.$duration.'<hr>
-		<strong>Instructions </strong>:'.parse_text_for_output($result['instructions']) .'<hr><br>';
+		echo ''.$duration.'<hr><br>';
 		
 		$funds = get_user_funds();
 		if($funds >= $result['category']){
@@ -245,6 +268,7 @@ function show_draws($status=''){
 		<strong>N'.$stats['money_pot'].' </strong></span>';
 		echo'</span>';
 		
+		
 		select_draw_winner($result['id'],$result['category']);
 		if($stats['participants'] < 1){
 		delete_draw($result['id']);
@@ -253,8 +277,9 @@ function show_draws($status=''){
 						<!-- Go to www.addthis.com/dashboard to customize your tools --> 
 						<div class="addthis_inline_share_toolbox"></div>
 						</div>';
-		echo $share_buttons.'</div>';
+		echo $share_buttons.'</li></div>';
 		}
+		echo '</ol>';
 	}
 
 

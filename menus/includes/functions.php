@@ -330,13 +330,16 @@ function menu_item_create($name='',$type='',$destination='',$parent=''){
 	//~ $dest_replace2 = str_ireplace('BASE_PATH/',ADDONS_PATH,$dest_replace1);
 	$parent = trim(mysql_prep($parent));
 	$parent_menu_id = trim(mysql_prep($_POST['parent_menu']));
+	if(empty($parent_menu_id)){
+		$parent_menu_id = '0';
+		}
 	$is_parent = '';
 	$is_child = '';
 	
 	
 	$q = mysqli_query($GLOBALS["___mysqli_ston"], "INSERT INTO `menus`(`id`, `menu_item_name`, `menu_type`, `position`, `visible`, `destination`, `parent`, `is_parent`,`is_child`, `parent_menu_id`) 
-	VALUES ('0', '{$menu_item_name}', '{$menu_type}', '{$position}', '{$visible}', '{$destination_url}', '{$parent}','{$is_parent}', '{$is_child}','{$parent_menu_id}')") 
-	or die ("Add menu item failed! o" . ((is_object($GLOBALS["___mysqli_ston"])) ? mysqli_error($GLOBALS["___mysqli_ston"]) : (($___mysqli_res = mysqli_connect_error()) ? $___mysqli_res : false)));
+	VALUES ('0', '{$menu_item_name}', '{$menu_type}', '{$position}', '{$visible}', '{$destination_url}', '{$parent}','{$is_parent}', '{$is_child}','{$parent_menu_id}')") ;
+	//~ or die ("Add menu item failed! o" . ((is_object($GLOBALS["___mysqli_ston"])) ? mysqli_error($GLOBALS["___mysqli_ston"]) : (($___mysqli_res = mysqli_connect_error()) ? $___mysqli_res : false)));
 	
 	if(!empty($parent_menu_id)){
 	$q = mysqli_query($GLOBALS["___mysqli_ston"], "UPDATE menus SET is_parent='yes' WHERE id='{$parent_menu_id}'") 

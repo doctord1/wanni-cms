@@ -124,7 +124,7 @@ function get_hashtag_posts(){
 	$show_more_pager = pagerize($start='',$show_more='15');
 	$limit = $_SESSION['pager_limit'];
 	
-	$query = mysqli_query($GLOBALS["___mysqli_ston"], "SELECT DISTINCT * FROM hashtagged_posts WHERE hashtag='{$hashtag}' GROUP BY parent_id ORDER BY id DESC {$limit}") 
+	$query = mysqli_query($GLOBALS["___mysqli_ston"], "SELECT * FROM hashtagged_posts WHERE hashtag='{$hashtag}' GROUP BY parent_id ORDER BY id DESC {$limit}") 
 	or die('There was a problem fetching hashtag posts ' .((is_object($GLOBALS["___mysqli_ston"])) ? mysqli_error($GLOBALS["___mysqli_ston"]) : (($___mysqli_res = mysqli_connect_error()) ? $___mysqli_res : false)));
 	
 	$num = mysqli_num_rows($query);
@@ -146,7 +146,9 @@ function get_hashtag_posts(){
 		$in_view = array();
 		$query2 = mysqli_query($GLOBALS["___mysqli_ston"], "SELECT * FROM page where id={$id}");
 		$result2 = mysqli_fetch_array($query2);
-			if(!in_array($in_view))
+		
+			if(!in_array($result['parent_id'],$in_view)){
+				$in_view[] = $result['parent_id'];
 			//$output = '<a href="'.$result2['destination'].'">'.str_ireplace('-',' ',ucfirst(urldecode($sel_page['page_name']))) .'</a><br>';
 			
 			$pic = show_user_pic($user=$result2['author'] ,$pic_class='img-rounded');
@@ -172,7 +174,8 @@ function get_hashtag_posts(){
 				$output3 = $output ."<a href='" .BASE_PATH ."?page_name=" .$result2['page_name'] ."&tid=".$result2['id']."'>".$pics[0]."</a>".'<br>'.$content2 .'<br>' .$output2. "<br> </td></tr>" ;
 			}
 			echo $output3;
-		
+			
+		}
 		
 	}echo '</tbody></table></section>';
 		echo $show_more_pager; 
@@ -202,7 +205,7 @@ function add_hashtag($hashtag="",$path='',$show_form='no',$post_type=""){
 		}
 	
 	if(isset($_POST['path'])){
-		$path = '';
+		$path = mysql_prep($_POST['path']);
 		}
 	if(isset($_POST['id'])){
 		$id = trim(mysql_prep($_POST['id']));
@@ -221,7 +224,7 @@ function add_hashtag($hashtag="",$path='',$show_form='no',$post_type=""){
 		}
 	
 	#SAVE TAGGED POST	
-	if($query){
+	
 		if(!empty($hashtag) && !isset($_POST['submitted'])){
 			
 		$query = mysqli_query($GLOBALS["___mysqli_ston"], "SELECT id FROM page WHERE destination='{$path}' LIMIT 1");
@@ -235,7 +238,7 @@ function add_hashtag($hashtag="",$path='',$show_form='no',$post_type=""){
 		VALUES ('0','{$hashtag}','{$path}','{$parent_id}','{$post_type}','{$creator}')") 
 		or die('Error inserting hashtag ' . ((is_object($GLOBALS["___mysqli_ston"])) ? mysqli_error($GLOBALS["___mysqli_ston"]) : (($___mysqli_res = mysqli_connect_error()) ? $___mysqli_res : false)));
 			}
-		}
+		
 		
 	#SHOW FORM
 	if($show_form =='yes'){

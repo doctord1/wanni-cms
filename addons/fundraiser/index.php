@@ -86,10 +86,11 @@ if (isset($_SESSION['username'])){
 	
 	}	
 }
-	if($_GET['action'] ==="list-fundraisers"){
-	 
-	get_fundraiser_lists();
-	}
+	
+	
+	show_fundraiser_lists('','pending');
+	show_fundraiser_lists('','finished');
+	
 
 
 

@@ -34,23 +34,23 @@ start_page();
 </section>
 	
 <!-- SECONDARY MENU -->
-<section class="secondary">
+<?php if(is_logged_in() && addon_is_available(menus)){
+echo '<section class="secondary">';
+	get_secondary_menu_items();
+echo '</section>';
+}
+?>
+<?php if(! is_logged_in() && !isset($_GET['action'])){
 	
-	<?php if(addon_is_available(menus)){ get_secondary_menu_items();}?>  
-</section>
-  
+			echo '<div class="jumbotron black">';
+			echo $_SESSION['banner'].'</div>';
+	} 
+	?> 
 
 <section class='container'>
 <?php include_once('../regions/includes/left_region.php'); ?>
 <!-- HIGHTLIGHT REGION -->
-<?php include_once('../regions/includes/highlight_region.php'); 
-if(! is_logged_in()){
-	
-			echo '<div class="row"><div class="col-md-12 col-xs-12 black margin-20 padding-10 large-text">';
-			echo $_SESSION['banner'];
-			echo '</div>
-			</div>';
-	}?>
+<?php include_once('../regions/includes/highlight_region.php'); ?>
 
 
 <div class='main-content-region text-center'>
@@ -92,10 +92,8 @@ if(isset($_GET['user'])){
 				}
 			echo '</p>' ;# Displays the user picture
 			
-			
-			
 			if(addon_is_active('referrals')){
-				//echo'<div class="col-md-12 thumbnail">';
+			//echo'<div class="col-md-12 thumbnail">';
 			$referrer = show_referrer(); 
 			echo $referrer['referrer_link'];
 			$referral = show_referral_id();
@@ -107,8 +105,7 @@ if(isset($_GET['user'])){
 			echo'<div class="col-md-12 ">';	
 			if(addon_is_active('contacts')){
 				add_to_contacts();
-				remove_from_contacts();
-				
+				remove_from_contacts();	
 			}
 				
 			
@@ -143,6 +140,10 @@ if(isset($_GET['user'])){
 			show_my_completed_tasks();
 			echo '<br><br></div>';
 			}
+			echo'<div class="col-md-12">
+			<h2>My Recent Posts</h2>';
+			my_authored_posts();
+			echo '<br><br></div>';
 			
 			list_users(); 
 			

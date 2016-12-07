@@ -159,7 +159,7 @@ function get_contest_lists($category='') {
 
 
 function show_new_contests(){
-$query=mysqli_query($GLOBALS["___mysqli_ston"], "SELECT * FROM contest where status='active' order by id DESC LIMIT 0, 3")
+$query=mysqli_query($GLOBALS["___mysqli_ston"], "SELECT * FROM contest where status='voting in progress' order by id DESC LIMIT 0, 3")
  or die('Problem with new contests ' .((is_object($GLOBALS["___mysqli_ston"])) ? mysqli_error($GLOBALS["___mysqli_ston"]) : (($___mysqli_res = mysqli_connect_error()) ? $___mysqli_res : false)));
 $num = mysqli_num_rows($query);
 if(is_home_page()){

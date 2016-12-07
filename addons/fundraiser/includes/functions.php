@@ -200,7 +200,7 @@ function delete_fundraiser_perk(){
 
 # LIST fundraiserS
 
-function get_fundraiser_lists($category='',$status='') {
+function show_fundraiser_lists($category='',$status='') {
 	if($category != '' && $status == ''){
 		$condition = "WHERE category='{$category}' and status='active'";
 		}
@@ -213,9 +213,10 @@ function get_fundraiser_lists($category='',$status='') {
 	}
 	
 	else{
-		$condition = " WHERE status='active'";		
+		$condition = "";		
 	}
 	
+	echo '<h2>'.$status.' fundraisers</h2>';
 	
 	if(url_contains('page_name=home')){
 		$query = mysqli_query($GLOBALS["___mysqli_ston"], "SELECT * FROM `fundraiser` {$condition} ORDER BY `id` DESC 
@@ -269,7 +270,7 @@ function get_fundraiser_lists($category='',$status='') {
   . '" '
   . '>delete </a></span>';
   }
-	$fundraiserlist .= "<span class='grey-text'> <em>fundraiser</em></span> </td>";
+	$fundraiserlist .= "<span class='grey-text'> <em>{$result['status']}</em></span> </td>";
 		}
 
   

@@ -1054,8 +1054,12 @@ function link_to($path='', $name='', $class='', $type='',$extra_get=''){
 
 
 function do_header() {	
-	show_logo(); # Displays logo
 	
+	if(!is_logged_in()){
+		echo '<div class="pull-right margin-10"><a href="'.BASE_PATH .'user/?action=login"><div class="btn btn-primary">Login </div></a>' .
+			'<a href="' .BASE_PATH .'user/?action=register"><div  class="btn btn-success">Signup </div></a></div>' ;
+	show_logo(); # Displays logo		
+		}
 	if(is_logged_in()){
 		show_welcome_message(); 
 		$output = get_region_blocks('header');
@@ -1244,7 +1248,7 @@ function do_footer(){
 		
 		".'<!-- Go to www.addthis.com/dashboard to customize your tools --> <script type="text/javascript" src="//s7.addthis.com/js/300/addthis_widget.js#pubid=ra-583a9f4c273aaaed"></script>  '.
     "<div class='text-center'>Powered by - Wanni CMS</div>" .
-	   "</div>";
+	   "</div>".'<script id="dsq-count-scr" src="//geniusaid-org.disqus.com/count.js" async></script>';
 	
 	
 	load_bootstrap();

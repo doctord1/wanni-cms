@@ -34,11 +34,11 @@ function create_user(){
 	if(isset($_GET['ref_id'])){
 	$ref_id = trim(mysql_prep($_GET['ref_id']));
 	}
-	 echo '<section class="pull-left"><ul><li id="add_page_form_link" class="float-right-lists"><a href="'.BASE_PATH .'user/?action=login">Login </a>' .
-	 '</li><li id="add_page_form_link" class="float-right-lists"><a href="' .BASE_PATH .'user/?action=register">Register </a></li></ul></section>' ;
+	 //~ echo '<section class="pull-left"><ul><li id="add_page_form_link" class="float-right-lists"><a href="'.BASE_PATH .'user/?action=login">Login </a>' .
+	 //~ '</li><li id="add_page_form_link" class="float-right-lists"><a href="' .BASE_PATH .'user/?action=register">Register </a></li></ul></section>' ;
 
-	  	echo "<br><div class='login-form' align='center'>" . 
-"<br><h1>Signup</h1>" .
+	  	echo "<div class='login-form' align='center'>" . 
+"<h1>Signup</h1>" .
 '<form action="process.php" method="post">' .
 'Username:<br>	<input type="text" name="user_name" id="user_name" placeholder="username" required><br>' .
 'Password:<br> <input type="password" name="password" id="password" placeholder="password" required><br>' .
@@ -97,14 +97,11 @@ function delete_user(){
 	 
 	 if(!isset($_SESSION['username']) && $query_string !== 'forgot_password'){
 	
-	echo '<div class="row">
-	<div class="col-md-7 col-xs-12">'; 
-	  echo '<div class="pull-left"><ul><li id="add_page_form_link" class="float-right-lists"><a href="'.BASE_PATH .'user/?action=login">Login </a>' .
-	 '</li><li id="add_page_form_link" class="float-right-lists"><a href="' .BASE_PATH .'user/?action=register">Signup </a></li></ul></div>' ;
+	echo '<div class="row">';
+	
 
-
-  	echo "<br><div class='login-form' align='center'>" .
-"<br><h1 align='center'> Login </h1>" .
+  	echo "<div class='login-form col-md-7 col-xs-12' align='center'>" .
+"<h1 align='center'> Login </h1>" .
 '<form action="'.BASE_PATH ."{$action}".'" method="post">' .
 'Phone: <br><input class="login" type="number" name="phone" id="user_name" placeholder="Phone number" width="40px"><br>' .
 'Password: <br><input class="login" type="password" name="password" id="password" placeholder="password"><br>' ;
@@ -119,7 +116,7 @@ echo '<input type="submit" name="submit" value="login" class="submit">
 '</form>' .
 '</div>' ;
 
-echo '</div>';
+//echo '</div>';
 echo '<div class="col-md-5 col-xs-12 well aliceblue">
 Support What we do on GeniusAid: 
 <br>(Any amount is welcome)<br><em>All contributions will be acknowledged on the GeniusAid supporters page.</em>
