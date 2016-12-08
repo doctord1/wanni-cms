@@ -87,9 +87,10 @@ if (isset($_SESSION['username'])){
 	}	
 }
 	
-	
+	if(!isset($_GET['action']) && !isset($_GET['tid'])){
 	show_fundraiser_lists('','pending');
 	show_fundraiser_lists('','finished');
+	}
 	
 
 
